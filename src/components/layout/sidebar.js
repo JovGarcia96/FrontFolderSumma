@@ -20,6 +20,7 @@ import {
   Smartphone,
   Globe
 } from 'lucide-react';
+import { a } from 'framer-motion/client';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,11 +40,11 @@ const Sidebar = () => {
     { icon: Settings, label: 'Configuraciones', path: '/configuraciones' },
     { icon: Shield, label: 'Control de Permisos', path: '/control-permisos', active: location.pathname === '/control-permisos' },
     { icon: FileText, label: 'Trámites Notariales', path: '/tramites_notariales', active: location.pathname === '/tramites_notariales' },
-    { icon: BarChart3, label: 'Panel de Control', path: '/panel-control' },
+    { icon: BarChart3, label: 'Panel de Control', path: '/paneldecontrol', active: location.pathname === '/paneldecontrol' },
     { icon: Landmark, label: 'Banco', path: '/bank', active: location.pathname === '/bank' },
     { icon: Briefcase, label: 'Giros Comerciales', path: '/giroscomerciales', active: location.pathname === '/giroscomerciales' },
     { icon: Globe, label: 'Dominios', path: '/dominios', active: location.pathname === '/dominios' },
-    { icon: Bell, label: 'Enviar Notificaciones', path: '/notificaciones' }
+    { icon: Bell, label: 'Enviar Notificaciones', path: '/notificaciones',active: location.pathname === '/notificaciones' },
   ];
 
   const toggleSidebar = () => {

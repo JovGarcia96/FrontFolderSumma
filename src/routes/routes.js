@@ -10,7 +10,7 @@ import BancaPrimerPiso from "../components/banca_primerpiso/banca_primerpiso";
 import ErrorService from "../components/errorservice/errorservice";
 import Error404 from "../components/error404/error404";
 import PanelControl from "../components/paneldecontrol/paneldecontrol";
-import { Component } from "lucide-react";
+import Notificaciones from "../components/notificacionesdata/notificaciones";
 
 const routes = [
   {
@@ -60,22 +60,24 @@ const routes = [
   },
   {
     path: "/errrorservice",
-    Component:ErrorService ,
+    Component: ErrorService,
     title: "ErrorServices"
   },
-
   {
     path: "/error404",
-    Component:Error404,
+    Component: Error404,
     title: "Error404"
   },
   {
-    path: "/panelcontrol",
+    path: "/paneldecontrol",
     Component: PanelControl,
-    title:"PaneldeControl"
-    
+    title: "PaneldeControl"
+  },
+  {
+    path: "/notificaciones",
+    Component: Notificaciones,
+    title: "Notificaciones"
   }
-
 ];
 
 export default routes;
