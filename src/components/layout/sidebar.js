@@ -27,24 +27,105 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Función para determinar si una ruta está activa
+  const isActiveRoute = (path, tab = null) => {
+    if (tab) {
+      // Para rutas con pestañas, verificar tanto la ruta como el parámetro tab
+      return location.pathname === '/mis-archivos' && 
+             new URLSearchParams(location.search).get('tab') === tab;
+    }
+    return location.pathname === path;
+  };
+
   const menuItems = [
-    { icon: Home, label: 'Inicio', path: '/dashboard', active: location.pathname === '/dashboard' },
-    { icon: FolderOpen, label: 'Mis Archivos', path: '/mis-archivos' },
-    { icon: Share2, label: 'Compartidos', path: '/compartidos' },
-    { icon: Clock, label: 'Recientes', path: '/recientes' }
+    { 
+      icon: Home, 
+      label: 'Inicio', 
+      path: '/dashboard', 
+      active: isActiveRoute('/dashboard')
+    },
+    { 
+      icon: FolderOpen, 
+      label: 'Mis Archivos', 
+      path: '/mis-archivos?tab=mis-archivos',
+      active: isActiveRoute('/mis-archivos', 'mis-archivos') || 
+              (location.pathname === '/mis-archivos' && !new URLSearchParams(location.search).get('tab'))
+    },
+    { 
+      icon: Share2, 
+      label: 'Compartidos', 
+      path: '/mis-archivos?tab=compartidos',
+      active: isActiveRoute('/mis-archivos', 'compartidos')
+    },
+    { 
+      icon: Clock, 
+      label: 'Recientes', 
+      path: '/mis-archivos?tab=recientes',
+      active: isActiveRoute('/mis-archivos', 'recientes')
+    }
   ];
 
   const moduleItems = [
-    { icon: CreditCard, label: 'Banca Primer Piso', path: '/banca_primerpiso',active: location.pathname === '/banca_primerpiso'},
-    { icon: Smartphone, label: 'Banca Segundo Piso', path: '/banca_segundopiso', active: location.pathname === '/banca_segundopiso' },
-    { icon: Settings, label: 'Configuraciones', path: '/configuraciones' },
-    { icon: Shield, label: 'Control de Permisos', path: '/control-permisos', active: location.pathname === '/control-permisos' },
-    { icon: FileText, label: 'Trámites Notariales', path: '/tramites_notariales', active: location.pathname === '/tramites_notariales' },
-    { icon: BarChart3, label: 'Panel de Control', path: '/paneldecontrol', active: location.pathname === '/paneldecontrol' },
-    { icon: Landmark, label: 'Banco', path: '/bank', active: location.pathname === '/bank' },
-    { icon: Briefcase, label: 'Giros Comerciales', path: '/giroscomerciales', active: location.pathname === '/giroscomerciales' },
-    { icon: Globe, label: 'Dominios', path: '/dominios', active: location.pathname === '/dominios' },
-    { icon: Bell, label: 'Enviar Notificaciones', path: '/notificaciones',active: location.pathname === '/notificaciones' },
+    { 
+      icon: CreditCard, 
+      label: 'Banca Primer Piso', 
+      path: '/banca_primerpiso',
+      active: isActiveRoute('/banca_primerpiso')
+    },
+    { 
+      icon: Smartphone, 
+      label: 'Banca Segundo Piso', 
+      path: '/banca_segundopiso', 
+      active: isActiveRoute('/banca_segundopiso')
+    },
+    { 
+      icon: Settings, 
+      label: 'Configuraciones', 
+      path: '/configuraciones',
+      active: isActiveRoute('/configuraciones')
+    },
+    { 
+      icon: Shield, 
+      label: 'Control de Permisos', 
+      path: '/control-permisos', 
+      active: isActiveRoute('/control-permisos')
+    },
+    { 
+      icon: FileText, 
+      label: 'Trámites Notariales', 
+      path: '/tramites_notariales', 
+      active: isActiveRoute('/tramites_notariales')
+    },
+    { 
+      icon: BarChart3, 
+      label: 'Panel de Control', 
+      path: '/paneldecontrol', 
+      active: isActiveRoute('/paneldecontrol')
+    },
+    { 
+      icon: Landmark, 
+      label: 'Banco', 
+      path: '/bank', 
+      active: isActiveRoute('/bank')
+    },
+    { 
+      icon: Briefcase, 
+      label: 'Giros Comerciales', 
+      path: '/giroscomerciales', 
+      active: isActiveRoute('/giroscomerciales')
+    },
+    { 
+      icon: Globe, 
+      label: 'Dominios', 
+      path: '/dominios', 
+      active: isActiveRoute('/dominios')
+    },
+    { 
+      icon: Bell, 
+      label: 'Enviar Notificaciones', 
+      path: '/notificaciones',
+      active: isActiveRoute('/notificaciones')
+    },
   ];
 
   const toggleSidebar = () => {
@@ -191,4 +272,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-  

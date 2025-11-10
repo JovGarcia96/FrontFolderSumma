@@ -11,7 +11,7 @@ import ErrorService from "../components/errorservice/errorservice";
 import Error404 from "../components/error404/error404";
 import PanelControl from "../components/paneldecontrol/paneldecontrol";
 import Notificaciones from "../components/notificacionesdata/notificaciones";
-
+import MisArchivos from "../components/mis_archivos/mis-archivos";
 const routes = [
   {
     path: "/login",
@@ -77,7 +77,23 @@ const routes = [
     path: "/notificaciones",
     Component: Notificaciones,
     title: "Notificaciones"
-  }
+  },
+  {
+    path: "/mis-archivos",
+    Component: MisArchivos,
+    title: "Mis Archivos"
+  },
+  // {
+  //   path: "/compartidos",
+  //   Component: Compartidos,
+  //   title: "Compartidos"
+  // },
+  // {
+  //   path: "/recientes",
+  //   Component: Recientes,
+  //   title: "Recientes"
+  // }
+
 ];
 
 export default routes;

@@ -23,9 +23,22 @@ import {
 const DashboardMain = () => {
   const navigate = useNavigate();
 
-  // Función para manejar navegación
-  const handleNavigation = (path) => {
-    navigate(path);
+  // Función para manejar navegación con parámetros opcionales
+  const handleNavigation = (path, params = null) => {
+    if (params) {
+      navigate(`${path}?${params}`);
+    } else {
+      navigate(path);
+    }
+  };
+
+  // Función para manejar click en toda la card
+  const handleCardClick = (item) => {
+    if (item.params) {
+      handleNavigation(item.path, item.params);
+    } else {
+      handleNavigation(item.path);
+    }
   };
 
   // Datos de las tarjetas principales
@@ -39,7 +52,7 @@ const DashboardMain = () => {
         { label: "Pendientes de revisión", badge: { value: "3", color: "orange" } }
       ],
       buttonText: "Acceder al módulo",
-      path: "/banca-primer-piso"
+      path: "/banca_primerpiso"
     },
     {
       title: "Segundo Piso",
@@ -61,7 +74,8 @@ const DashboardMain = () => {
         { label: "Actualizaciones", badge: { value: "2", color: "green" } }
       ],
       buttonText: "Configurar sistema",
-      path: "/configuraciones"
+      path: "/paneldecontrol",
+      params: "section=configuraciones" // Parámetro para ir a configuraciones
     }
   ];
 
@@ -98,7 +112,7 @@ const DashboardMain = () => {
         { label: "Actividad hoy", value: "89" }
       ],
       buttonText: "Ver estadísticas",
-      path: "/panel-control"
+      path: "/paneldecontrol"
     }
   ];
 
@@ -179,7 +193,11 @@ const DashboardMain = () => {
           {/* Main Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             {mainStats.map((item, index) => (
-              <Card key={index} className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
+              <Card 
+                key={index} 
+                className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm cursor-pointer"
+                onClick={() => handleCardClick(item)}
+              >
                 <CardHeader className="pb-1 pt-2 px-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
@@ -203,7 +221,10 @@ const DashboardMain = () => {
                     ))}
                   </div>
                   <button 
-                    onClick={() => handleNavigation(item.path)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evitar doble navegación
+                      handleCardClick(item);
+                    }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs font-medium transition-colors"
                   >
                     {item.buttonText}
@@ -216,7 +237,11 @@ const DashboardMain = () => {
           {/* Secondary Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             {secondaryStats.map((item, index) => (
-              <Card key={index} className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
+              <Card 
+                key={index} 
+                className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm cursor-pointer"
+                onClick={() => handleCardClick(item)}
+              >
                 <CardHeader className="pb-1 pt-2 px-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
@@ -240,7 +265,10 @@ const DashboardMain = () => {
                     ))}
                   </div>
                   <button 
-                    onClick={() => handleNavigation(item.path)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evitar doble navegación
+                      handleCardClick(item);
+                    }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs font-medium transition-colors"
                   >
                     {item.buttonText}

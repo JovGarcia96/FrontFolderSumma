@@ -42,6 +42,10 @@ const BancaSegundoPiso = () => {
   const [selectedPlataforma, setSelectedPlataforma] = useState(null);
   const [showCuentasView, setShowCuentasView] = useState(false);
 
+  // Estados para modales
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [selectedPlataformaInfo, setSelectedPlataformaInfo] = useState(null);
+
   // Mapeo de iconos para cada plataforma
   const platformIcons = {
     'KLU': '/assets/logos/klu.png',
@@ -57,13 +61,19 @@ const BancaSegundoPiso = () => {
       descripcion: "Plataforma de servicios financieros digitales",
       activo: true,
       fechaCreacion: "24/07/2025, 12:02:46",
+      direccion: "Av. Paseo de la Reforma 250, Col. Juárez, Ciudad de México",
+      telefono: "+52 55 1234 5678",
+      email: "contacto@klu.mx",
+      sitioWeb: "www.klu.mx",
+      rfc: "KLU970519DU8",
+      representanteLegal: "María González López",
       cuentas: [
         {
           id: 1,
           numeroCuenta: "1234567890123456",
           clabe: "012345678901234567",
           sucursal: "Centro Histórico",
-          cliente: "Juan Pérez García",
+          cliente: "Grupo Summa S.A. de C.V.",
           telefono: "+52 55 1234 5678",
           correo: "juan.perez@email.com",
           firmante: "María González López",
@@ -74,7 +84,7 @@ const BancaSegundoPiso = () => {
           numeroCuenta: "1234567890123457",
           clabe: "012345678901234568",
           sucursal: "Polanco",
-          cliente: "Ana Martínez Ruiz",
+          cliente: "Summa Financiera S.A.",
           telefono: "+52 55 8765 4321",
           correo: "ana.martinez@email.com",
           firmante: "Carlos Rodríguez Sánchez",
@@ -88,13 +98,19 @@ const BancaSegundoPiso = () => {
       descripcion: "Sistema de pagos y transferencias",
       activo: true,
       fechaCreacion: "24/07/2025, 12:02:46",
+      direccion: "Av. Santa Fe 495, Col. Cruz Manca, Ciudad de México",
+      telefono: "+52 55 2345 6789",
+      email: "contacto@netpay.mx",
+      sitioWeb: "www.netpay.mx",
+      rfc: "NET970519DU9",
+      representanteLegal: "Carlos Rodríguez Sánchez",
       cuentas: [
         {
           id: 3,
           numeroCuenta: "2345678901234567",
           clabe: "012345678901234569",
           sucursal: "Santa Fe",
-          cliente: "Roberto Silva Mendoza",
+          cliente: "Grupo Summa S.A. de C.V.",
           telefono: "+52 55 2345 6789",
           correo: "roberto.silva@email.com",
           firmante: "Laura Jiménez Torres",
@@ -108,13 +124,19 @@ const BancaSegundoPiso = () => {
       descripcion: "Banco digital y servicios financieros",
       activo: true,
       fechaCreacion: "24/07/2025, 12:02:46",
+      direccion: "Av. Universidad 1200, Col. Xoco, Ciudad de México",
+      telefono: "+52 55 3456 7890",
+      email: "contacto@nu.mx",
+      sitioWeb: "www.nu.mx",
+      rfc: "NUB970519DU0",
+      representanteLegal: "Patricia López Hernández",
       cuentas: [
         {
           id: 4,
           numeroCuenta: "3456789012345678",
           clabe: "012345678901234570",
           sucursal: "Roma Norte",
-          cliente: "Patricia López Hernández",
+          cliente: "Grupo Summa S.A. de C.V.",
           telefono: "+52 55 3456 7890",
           correo: "patricia.lopez@email.com",
           firmante: "Miguel Ángel Vargas",
@@ -125,7 +147,7 @@ const BancaSegundoPiso = () => {
           numeroCuenta: "3456789012345679",
           clabe: "012345678901234571",
           sucursal: "Condesa",
-          cliente: "Fernando Morales Castro",
+          cliente: "Summa Financiera S.A.",
           telefono: "+52 55 4567 8901",
           correo: "fernando.morales@email.com",
           firmante: "Isabel Ramírez Flores",
@@ -137,15 +159,21 @@ const BancaSegundoPiso = () => {
       id: 4,
       nombrePlataforma: "KLAR",
       descripcion: "Aplicación de banca móvil",
-      activo: true,
+      activo: false,
       fechaCreacion: "24/07/2025, 12:02:46",
+      direccion: "Av. Insurgentes Sur 1602, Col. Crédito Constructor, Ciudad de México",
+      telefono: "+52 55 4567 8901",
+      email: "contacto@klar.mx",
+      sitioWeb: "www.klar.mx",
+      rfc: "KLA970519DU1",
+      representanteLegal: "Diego Herrera Campos",
       cuentas: [
         {
           id: 6,
           numeroCuenta: "4567890123456789",
           clabe: "012345678901234572",
           sucursal: "Insurgentes Sur",
-          cliente: "Alejandra Ruiz Moreno",
+          cliente: "Grupo Summa S.A. de C.V.",
           telefono: "+52 55 5678 9012",
           correo: "alejandra.ruiz@email.com",
           firmante: "Diego Herrera Campos",
@@ -235,6 +263,12 @@ const BancaSegundoPiso = () => {
     estatus: "Activa"
   });
 
+  // Función para manejar vista de información
+  const handleViewInfo = (plataforma) => {
+    setSelectedPlataformaInfo(plataforma);
+    setShowInfoModal(true);
+  };
+
   const handleCreate = () => {
     const newPlataforma = {
       id: Math.max(...plataformas.map((p) => p.id)) + 1,
@@ -242,6 +276,12 @@ const BancaSegundoPiso = () => {
       descripcion: formData.descripcion,
       activo: formData.activo,
       fechaCreacion: new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
+      direccion: "Dirección por definir",
+      telefono: "+52 55 0000 0000",
+      email: "contacto@plataforma.mx",
+      sitioWeb: "www.plataforma.mx",
+      rfc: "PLT970519DU0",
+      representanteLegal: "Por definir",
       cuentas: []
     };
     setPlataformas([...plataformas, newPlataforma]);
@@ -371,30 +411,20 @@ const BancaSegundoPiso = () => {
   };
 
   const handleUpdateCuenta = () => {
-    if (!selectedPlataforma || !editingCuenta) return;
+    if (!editingCuenta || !selectedPlataforma) return;
     
-    const updatedPlataformas = plataformas.map(plataforma => 
-      plataforma.id === selectedPlataforma.id 
-        ? { 
-            ...plataforma, 
-            cuentas: plataforma.cuentas.map(cuenta => 
-              cuenta.id === editingCuenta.id 
-                ? { ...cuentaFormData, id: cuenta.id }
-                : cuenta
-            )
-          }
-        : plataforma
+    const updatedCuentas = selectedPlataforma.cuentas.map(cuenta =>
+      cuenta.id === editingCuenta.id ? { ...cuenta, ...cuentaFormData } : cuenta
+    );
+    
+    const updatedPlataforma = { ...selectedPlataforma, cuentas: updatedCuentas };
+    
+    const updatedPlataformas = plataformas.map(plataforma =>
+      plataforma.id === selectedPlataforma.id ? updatedPlataforma : plataforma
     );
     
     setPlataformas(updatedPlataformas);
-    setSelectedPlataforma({
-      ...selectedPlataforma, 
-      cuentas: selectedPlataforma.cuentas.map(cuenta => 
-        cuenta.id === editingCuenta.id 
-          ? { ...cuentaFormData, id: cuenta.id }
-          : cuenta
-      )
-    });
+    setSelectedPlataforma(updatedPlataforma);
     setEditingCuenta(null);
     setCuentaFormData({
       numeroCuenta: "",
@@ -409,50 +439,60 @@ const BancaSegundoPiso = () => {
     setIsEditCuentaDialogOpen(false);
   };
 
-  const handleDeleteCuenta = (id) => {
+  const handleDeleteCuenta = (cuentaId) => {
     if (!selectedPlataforma) return;
     
-    const updatedPlataformas = plataformas.map(plataforma => 
-      plataforma.id === selectedPlataforma.id 
-        ? { ...plataforma, cuentas: plataforma.cuentas.filter(cuenta => cuenta.id !== id) }
-        : plataforma
+    const updatedCuentas = selectedPlataforma.cuentas.filter(cuenta => cuenta.id !== cuentaId);
+    const updatedPlataforma = { ...selectedPlataforma, cuentas: updatedCuentas };
+    
+    const updatedPlataformas = plataformas.map(plataforma =>
+      plataforma.id === selectedPlataforma.id ? updatedPlataforma : plataforma
     );
     
     setPlataformas(updatedPlataformas);
-    setSelectedPlataforma({...selectedPlataforma, cuentas: selectedPlataforma.cuentas.filter(cuenta => cuenta.id !== id)});
+    setSelectedPlataforma(updatedPlataforma);
   };
 
-  const toggleCuentaEstatus = (id) => {
+  const toggleCuentaEstatus = (cuentaId) => {
     if (!selectedPlataforma) return;
     
-    const updatedPlataformas = plataformas.map(plataforma => 
-      plataforma.id === selectedPlataforma.id 
-        ? { 
-            ...plataforma, 
-            cuentas: plataforma.cuentas.map(cuenta => 
-              cuenta.id === id 
-                ? { ...cuenta, estatus: cuenta.estatus === "Activa" ? "Suspendida" : "Activa" }
-                : cuenta
-            )
-          }
-        : plataforma
+    const updatedCuentas = selectedPlataforma.cuentas.map(cuenta =>
+      cuenta.id === cuentaId 
+        ? { ...cuenta, estatus: cuenta.estatus === 'Activa' ? 'Suspendida' : 'Activa' }
+        : cuenta
+    );
+    
+    const updatedPlataforma = { ...selectedPlataforma, cuentas: updatedCuentas };
+    
+    const updatedPlataformas = plataformas.map(plataforma =>
+      plataforma.id === selectedPlataforma.id ? updatedPlataforma : plataforma
     );
     
     setPlataformas(updatedPlataformas);
-    setSelectedPlataforma({
-      ...selectedPlataforma, 
-      cuentas: selectedPlataforma.cuentas.map(cuenta => 
-        cuenta.id === id 
-          ? { ...cuenta, estatus: cuenta.estatus === "Activa" ? "Suspendida" : "Activa" }
-          : cuenta
-      )
-    });
+    setSelectedPlataforma(updatedPlataforma);
   };
 
-  // Filtros
-  const filteredCarpetas = carpetas.filter(carpeta =>
+  // Calcular estadísticas
+  const totalPlataformas = plataformas.length;
+  const plataformasActivas = plataformas.filter(p => p.activo).length;
+  const plataformasInactivas = totalPlataformas - plataformasActivas;
+  const tasaActividad = totalPlataformas > 0 ? ((plataformasActivas / totalPlataformas) * 100).toFixed(1) : 0;
+
+  // Calcular estadísticas de carpetas
+  const totalCategorias = carpetas.length;
+  const totalDocumentos = carpetas.reduce((sum, carpeta) => sum + carpeta.documentos, 0);
+  const instituciones = 6; // Número fijo de instituciones
+  const disponibilidad = "99.9%"; // Disponibilidad del sistema
+
+  // Filtrar elementos según el término de búsqueda
+  const filteredCarpetas = carpetas.filter(carpeta => 
     carpeta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     carpeta.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPlataformas = plataformas.filter(plataforma => 
+    plataforma.nombrePlataforma.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    plataforma.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -466,7 +506,7 @@ const BancaSegundoPiso = () => {
         <div className="h-12 bg-white border-b border-gray-200 flex items-center px-3">
           <button 
             onClick={() => handleNavigation('/dashboard')}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
             Volver al Inicio
@@ -475,29 +515,27 @@ const BancaSegundoPiso = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
-          {/* Header Section con pestañas de navegación */}
+          {/* Header Section */}
           <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 rounded-xl p-6 text-white shadow-xl mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <CreditCard className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-white">Banca Segundo Piso</h1>
-                  <p className="text-blue-200 mt-1">Plataforma integral de gestión financiera con tecnología de vanguardia</p>
-                  <div className="flex items-center gap-6 mt-3 text-sm text-blue-200">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-400" />
-                      <span>Sistema Activo</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-blue-400" />
-                      <span>Seguridad Bancaria</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-purple-400" />
-                      <span>Multi-Institución</span>
-                    </div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <CreditCard className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Banca Segundo Piso</h1>
+                <p className="text-blue-100 mt-1">Plataforma integral de gestión financiera con tecnología de vanguardia</p>
+                <div className="flex items-center gap-6 mt-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-sm text-blue-100">Sistema Activo</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-blue-300" />
+                    <span className="text-sm text-blue-100">Seguridad Bancaria</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-purple-300" />
+                    <span className="text-sm text-blue-100">Multi-Institución</span>
                   </div>
                 </div>
               </div>
@@ -507,13 +545,13 @@ const BancaSegundoPiso = () => {
           {/* Navigation Tabs */}
           <div className="border-b border-gray-100 px-6">
             <div className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => setActiveView("carpetas")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                     activeView === "carpetas"
-                      ? "bg-blue-900 text-white"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   <FolderOpen className="h-4 w-4" />
@@ -521,29 +559,27 @@ const BancaSegundoPiso = () => {
                 </button>
                 <button
                   onClick={() => setActiveView("plataformas")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                     activeView === "plataformas"
-                      ? "bg-blue-900 text-white"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                   }`}
                 >
                   <Smartphone className="h-4 w-4" />
                   Gestión de Plataformas
                 </button>
               </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder={
-                    activeView === "plataformas" ? "Buscar plataformas..." :
-                    "Buscar en documentos financieros..."
-                  }
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder={activeView === "carpetas" ? "Buscar en documentos financieros..." : "Buscar plataformas..."}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -551,16 +587,14 @@ const BancaSegundoPiso = () => {
           {/* Contenido condicional basado en la vista activa */}
           <div className="px-6 py-6">
             {activeView === "carpetas" && (
-              /* Vista de Carpetas */
               <>
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                  {/* Categorías Activas */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-400 mb-1">Categorías Activas</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">6</p>
+                        <p className="text-sm text-gray-600 mb-1">Categorías Activas</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{totalCategorias}</p>
                       </div>
                       <div className="p-3 bg-blue-100 rounded-lg">
                         <FolderOpen className="h-6 w-6 text-blue-600" />
@@ -568,12 +602,11 @@ const BancaSegundoPiso = () => {
                     </div>
                   </div>
 
-                  {/* Total Documentos */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">Total Documentos</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">316</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{totalDocumentos}</p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
                         <FileText className="h-6 w-6 text-green-600" />
@@ -581,25 +614,23 @@ const BancaSegundoPiso = () => {
                     </div>
                   </div>
 
-                  {/* Instituciones */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">Instituciones</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">6</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{instituciones}</p>
                       </div>
                       <div className="p-3 bg-purple-100 rounded-lg">
-                        <Building2 className="h-6 w-6 text-purple-600" />
+                        <Users className="h-6 w-6 text-purple-600" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Disponibilidad */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">Disponibilidad</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">99.9%</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{disponibilidad}</p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
                         <TrendingUp className="h-6 w-6 text-green-600" />
@@ -662,166 +693,121 @@ const BancaSegundoPiso = () => {
             )}
 
             {activeView === "plataformas" && !showCuentasView && (
-              /* Vista de Plataformas - Lista de plataformas */
               <>
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                  <Card className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
-                    <CardHeader className="pb-1 pt-2 px-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                          <Smartphone className="h-3.5 w-3.5 text-blue-600" />
-                        </div>
-                        <CardTitle className="text-xs font-semibold text-gray-900">
-                          Total de Plataformas
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-xs text-gray-500">
-                        Plataformas registradas
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-2 px-3">
-                      <div className="text-2xl font-bold text-gray-900">{plataformas.length}</div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
-                    <CardHeader className="pb-1 pt-2 px-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
-                          <Shield className="h-3.5 w-3.5 text-green-600" />
-                        </div>
-                        <CardTitle className="text-xs font-semibold text-gray-900">
-                          Plataformas Activas
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-xs text-gray-500">
-                        Operando normalmente
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-2 px-3">
-                      <div className="text-2xl font-bold text-green-700">
-                        {plataformas.filter((p) => p.activo).length}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
-                    <CardHeader className="pb-1 pt-2 px-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center flex-shrink-0">
-                          <Users className="h-3.5 w-3.5 text-red-600" />
-                        </div>
-                        <CardTitle className="text-xs font-semibold text-gray-900">
-                          Plataformas Inactivas
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-xs text-gray-500">
-                        Suspendidas temporalmente
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-2 px-3">
-                      <div className="text-2xl font-bold text-red-700">
-                        {plataformas.filter((p) => !p.activo).length}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 bg-white hover:shadow-md transition-all duration-200 shadow-sm">
-                    <CardHeader className="pb-1 pt-2 px-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                          <TrendingUp className="h-3.5 w-3.5 text-blue-600" />
-                        </div>
-                        <CardTitle className="text-xs font-semibold text-gray-900">
-                          Tasa de Actividad
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-xs text-gray-500">
-                        Plataformas operativas
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-2 px-3">
-                      <div className="text-2xl font-bold text-blue-700">
-                        {plataformas.length > 0
-                          ? Math.round((plataformas.filter((p) => p.activo).length / plataformas.length) * 100)
-                          : 0}%
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Botón para agregar nueva plataforma */}
-                <div className="mb-4 flex justify-end">
-                  <button 
-                    onClick={() => setIsCreateDialogOpen(true)}
-                    className="bg-blue-600 text-white hover:bg-blue-700 font-medium px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Registrar Nueva Plataforma
-                  </button>
-                </div>
-
-                {/* Main Content */}
-                <Card className="mb-3 border border-gray-200 bg-white shadow-sm">
-                  <CardHeader className="pb-1 pt-2 px-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                        <Smartphone className="h-4 w-4 text-blue-600" />
-                      </div>
+                {/* Stats Cards para Plataformas - Diseño como Banca Primer Piso */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-sm font-semibold text-gray-900">
-                          Registro de Plataformas Fintech
-                        </CardTitle>
-                        <CardDescription className="text-xs text-gray-500">
-                          Listado completo de plataformas financieras digitales registradas en el sistema
-                        </CardDescription>
+                        <p className="text-sm text-gray-600 mb-1">Total de Plataformas</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{totalPlataformas}</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <Smartphone className="h-6 w-6 text-blue-600" />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Plataformas Activas</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{plataformasActivas}</p>
+                      </div>
+                      <div className="p-3 bg-green-100 rounded-lg">
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Plataformas Inactivas</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{plataformasInactivas}</p>
+                      </div>
+                      <div className="p-3 bg-red-100 rounded-lg">
+                        <Ban className="h-6 w-6 text-red-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Tasa de Actividad</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-1">{tasaActividad}%</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabla de Plataformas - Diseño como Gestión de Bancos */}
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b border-gray-200 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Building2 className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <CardTitle className="text-lg">Registro de Plataformas Fintech</CardTitle>
+                          <CardDescription>Listado completo de plataformas financieras digitales registradas en el sistema</CardDescription>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setIsCreateDialogOpen(true)}
+                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Registrar Nueva Plataforma
+                      </button>
+                    </div>
                   </CardHeader>
-                  <CardContent className="pt-0 pb-2 px-3">
+                  <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">ID</th>
-                            <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Plataforma Fintech</th>
-                            <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Código</th>
-                            <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Estado Operativo</th>
-                            <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Fecha de Registro</th>
-                            <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Acciones</th>
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Plataforma Fintech</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Código</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Estado Operativo</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha de Registro</th>
+                            <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {plataformas.map((plataforma) => (
-                            <tr key={plataforma.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                              <td className="py-2 px-2">
-                                <span className="text-xs font-medium text-gray-600">
+                          {filteredPlataformas.map((plataforma, index) => (
+                            <tr key={plataforma.id} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                              <td className="py-3 px-4">
+                                <span className="text-sm text-gray-600 font-mono">
                                   #{plataforma.id.toString().padStart(3, "0")}
                                 </span>
                               </td>
-                              <td className="py-2 px-2">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-white border border-gray-200 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                     {getPlatformIcon(plataforma.nombrePlataforma) ? (
                                       <img 
                                         src={getPlatformIcon(plataforma.nombrePlataforma)}
                                         alt={`${plataforma.nombrePlataforma} logo`}
-                                        className="w-6 h-6 object-contain"
+                                        className="w-8 h-8 object-contain"
                                         onError={(e) => {
                                           e.target.style.display = 'none';
                                           e.target.nextSibling.style.display = 'flex';
                                         }}
                                       />
                                     ) : null}
-                                    <div className={`w-6 h-6 bg-blue-100 rounded flex items-center justify-center ${getPlatformIcon(plataforma.nombrePlataforma) ? 'hidden' : ''}`}>
-                                      <Smartphone className="h-3 w-3 text-blue-600" />
+                                    <div className={`w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center ${getPlatformIcon(plataforma.nombrePlataforma) ? 'hidden' : ''}`}>
+                                      <Smartphone className="h-4 w-4 text-blue-600" />
                                     </div>
                                   </div>
                                   <div>
                                     <button
                                       onClick={() => handlePlataformaClick(plataforma)}
-                                      className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                                      className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
                                     >
                                       {plataforma.nombrePlataforma}
                                     </button>
@@ -829,14 +815,14 @@ const BancaSegundoPiso = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-2 px-2">
-                                <span className="text-xs text-gray-600">
+                              <td className="py-3 px-4">
+                                <span className="text-sm text-gray-600">
                                   FT{plataforma.id.toString().padStart(3, "0")}
                                 </span>
                               </td>
-                              <td className="py-2 px-2">
+                              <td className="py-3 px-4">
                                 <div className="flex items-center gap-2">
-                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                     plataforma.activo 
                                       ? "bg-green-100 text-green-800" 
                                       : "bg-red-100 text-red-800"
@@ -854,28 +840,38 @@ const BancaSegundoPiso = () => {
                                   </label>
                                 </div>
                               </td>
-                              <td className="py-2 px-2">
-                                <span className="text-xs text-gray-600 font-mono">{plataforma.fechaCreacion}</span>
+                              <td className="py-3 px-4">
+                                <span className="text-sm text-gray-600 font-mono">{plataforma.fechaCreacion}</span>
                               </td>
-                              <td className="py-2 px-2">
-                                <div className="flex items-center justify-center gap-1">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center justify-center gap-2">
+                                  {/* Botón Ver Información */}
+                                  <button
+                                    onClick={() => handleViewInfo(plataforma)}
+                                    className="text-blue-600 hover:text-blue-800 transition-colors p-1"
+                                    title="Ver información"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                  {/* Botón Editar */}
                                   <button
                                     onClick={() => handleEdit(plataforma)}
-                                    className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    className="text-green-600 hover:text-green-800 transition-colors p-1"
                                     title="Editar"
                                   >
-                                    <Edit className="h-3 w-3" />
+                                    <Edit className="h-4 w-4" />
                                   </button>
+                                  {/* Botón Eliminar */}
                                   <button
                                     onClick={() => {
                                       if (window.confirm(`¿Está seguro que desea eliminar la plataforma "${plataforma.nombrePlataforma}"?`)) {
                                         handleDelete(plataforma.id);
                                       }
                                     }}
-                                    className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    className="text-red-600 hover:text-red-800 transition-colors p-1"
                                     title="Eliminar"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
                                 </div>
                               </td>
@@ -1006,7 +1002,7 @@ const BancaSegundoPiso = () => {
                                 <div className="flex items-center justify-center gap-2">
                                   <button 
                                     onClick={() => handleEditCuenta(cuenta)}
-                                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                                    className="p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
                                     title="Editar"
                                   >
                                     <Edit className="h-4 w-4" />
@@ -1046,6 +1042,208 @@ const BancaSegundoPiso = () => {
           </div>
         </footer>
       </div>
+
+      {/* Modal de Información de Plataforma */}
+      {showInfoModal && selectedPlataformaInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            {/* Header del Modal */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">{selectedPlataformaInfo.nombrePlataforma}</h2>
+                    <p className="text-blue-100 text-sm">{selectedPlataformaInfo.descripcion}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowInfoModal(false)}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Información Básica */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Hash className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Información Básica</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Hash className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Código:</span>
+                        <span className="ml-2 font-medium">FT{selectedPlataformaInfo.id.toString().padStart(3, "0")}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Estado:</span>
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedPlataformaInfo.activo 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {selectedPlataformaInfo.activo ? 'Operativo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Fecha de Registro:</span>
+                        <span className="ml-2 font-medium">{selectedPlataformaInfo.fechaCreacion}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Representante Legal:</span>
+                        <span className="ml-2 font-medium">{selectedPlataformaInfo.representanteLegal}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Información de Contacto */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Phone className="h-5 w-5 text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Información de Contacto</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <span className="text-sm text-gray-500">Dirección:</span>
+                        <p className="font-medium text-sm">{selectedPlataformaInfo.direccion}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Teléfono:</span>
+                        <span className="ml-2 font-medium">{selectedPlataformaInfo.telefono}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Email:</span>
+                        <span className="ml-2 font-medium">{selectedPlataformaInfo.email}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">Sitio Web:</span>
+                        <span className="ml-2 font-medium text-blue-600">{selectedPlataformaInfo.sitioWeb}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm text-gray-500">RFC:</span>
+                        <span className="ml-2 font-medium">{selectedPlataformaInfo.rfc}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estadísticas de Cuentas */}
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Estadísticas de Cuentas</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedPlataformaInfo.cuentas.length}
+                    </div>
+                    <div className="text-sm text-blue-600">Total de Cuentas</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {selectedPlataformaInfo.cuentas.filter(c => c.estatus === 'Activa').length}
+                    </div>
+                    <div className="text-sm text-green-600">Cuentas Activas</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">
+                      {selectedPlataformaInfo.cuentas.filter(c => c.estatus === 'Suspendida').length}
+                    </div>
+                    <div className="text-sm text-red-600">Cuentas Inactivas</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cuentas Asociadas */}
+              {selectedPlataformaInfo.cuentas.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Hash className="h-5 w-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Cuentas Asociadas</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left py-2 px-3 font-medium text-gray-900">Cuenta</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-900">Cliente</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-900">Sucursal</th>
+                          <th className="text-left py-2 px-3 font-medium text-gray-900">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedPlataformaInfo.cuentas.map((cuenta) => (
+                          <tr key={cuenta.id} className="border-b border-gray-100">
+                            <td className="py-2 px-3 font-mono text-xs">{cuenta.numeroCuenta}</td>
+                            <td className="py-2 px-3">{cuenta.cliente}</td>
+                            <td className="py-2 px-3">{cuenta.sucursal}</td>
+                            <td className="py-2 px-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                cuenta.estatus === 'Activa' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {cuenta.estatus}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer del Modal */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowInfoModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Dialog para Plataformas */}
       {isCreateDialogOpen && (
@@ -1104,7 +1302,8 @@ const BancaSegundoPiso = () => {
               </button>
               <button
                 onClick={handleCreate}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!formData.nombrePlataforma || !formData.descripcion}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 Registrar Plataforma
               </button>
@@ -1114,14 +1313,14 @@ const BancaSegundoPiso = () => {
       )}
 
       {/* Edit Dialog para Plataformas */}
-      {isEditDialogOpen && editingPlataforma && (
+      {isEditDialogOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex items-center gap-2 mb-4">
               <Edit className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Modificar Plataforma Fintech</h3>
+              <h3 className="text-lg font-semibold">Editar Plataforma Fintech</h3>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Actualice la información de la plataforma financiera digital seleccionada</p>
+            <p className="text-sm text-gray-600 mb-4">Modifique la información de la plataforma financiera digital</p>
             
             <div className="space-y-4">
               <div>
@@ -1130,6 +1329,7 @@ const BancaSegundoPiso = () => {
                   type="text"
                   value={formData.nombrePlataforma}
                   onChange={(e) => setFormData({ ...formData, nombrePlataforma: e.target.value })}
+                  placeholder="Ej: KLU, NETPAY, NU, KLAR"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -1139,6 +1339,7 @@ const BancaSegundoPiso = () => {
                   type="text"
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  placeholder="Descripción de la plataforma"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -1168,7 +1369,8 @@ const BancaSegundoPiso = () => {
               </button>
               <button
                 onClick={handleUpdate}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!formData.nombrePlataforma || !formData.descripcion}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 Actualizar Plataforma
               </button>
@@ -1180,100 +1382,96 @@ const BancaSegundoPiso = () => {
       {/* Create Dialog para Cuentas */}
       {isCreateCuentaDialogOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">Agregar Nueva Cuenta</h3>
-              </div>
-              <button 
-                onClick={() => setIsCreateCuentaDialogOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Agregar Nueva Cuenta</h3>
             </div>
+            <p className="text-sm text-gray-600 mb-4">Complete la información requerida para registrar una nueva cuenta bancaria</p>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cuenta</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.numeroCuenta}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, numeroCuenta: e.target.value })}
-                  placeholder="Ej: 1234567890123456"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cuenta</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.numeroCuenta}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, numeroCuenta: e.target.value })}
+                    placeholder="1234567890123456"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CLABE</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.clabe}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, clabe: e.target.value })}
+                    placeholder="012345678901234567"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.sucursal}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, sucursal: e.target.value })}
+                    placeholder="Centro Histórico"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.cliente}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, cliente: e.target.value })}
+                    placeholder="Nombre del cliente"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.telefono}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, telefono: e.target.value })}
+                    placeholder="+52 55 1234 5678"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Correo</label>
+                  <input
+                    type="email"
+                    value={cuentaFormData.correo}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, correo: e.target.value })}
+                    placeholder="cliente@email.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CLABE</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.clabe}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, clabe: e.target.value })}
-                  placeholder="Ej: 012345678901234567"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.sucursal}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, sucursal: e.target.value })}
-                  placeholder="Ej: Centro Histórico"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.cliente}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, cliente: e.target.value })}
-                  placeholder="Ej: Juan Pérez García"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.telefono}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, telefono: e.target.value })}
-                  placeholder="Ej: +52 55 1234 5678"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-                <input
-                  type="email"
-                  value={cuentaFormData.correo}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, correo: e.target.value })}
-                  placeholder="Ej: juan.perez@email.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Firmante Autorizado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Firmante</label>
                 <input
                   type="text"
                   value={cuentaFormData.firmante}
                   onChange={(e) => setCuentaFormData({ ...cuentaFormData, firmante: e.target.value })}
-                  placeholder="Ej: María González López"
+                  placeholder="Nombre del firmante autorizado"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Estado de la Cuenta</label>
-                  <p className="text-xs text-gray-500">Determina si la cuenta está activa o suspendida</p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
                 <select
                   value={cuentaFormData.estatus}
                   onChange={(e) => setCuentaFormData({ ...cuentaFormData, estatus: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="Activa">Activa</option>
                   <option value="Suspendida">Suspendida</option>
@@ -1290,9 +1488,10 @@ const BancaSegundoPiso = () => {
               </button>
               <button
                 onClick={handleCreateCuenta}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!cuentaFormData.numeroCuenta || !cuentaFormData.clabe || !cuentaFormData.cliente}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Crear Cuenta
+                Agregar Cuenta
               </button>
             </div>
           </div>
@@ -1300,95 +1499,98 @@ const BancaSegundoPiso = () => {
       )}
 
       {/* Edit Dialog para Cuentas */}
-      {isEditCuentaDialogOpen && editingCuenta && (
+      {isEditCuentaDialogOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Edit className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">Editar Cuenta</h3>
-              </div>
-              <button 
-                onClick={() => setIsEditCuentaDialogOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Edit className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Editar Cuenta</h3>
             </div>
+            <p className="text-sm text-gray-600 mb-4">Modifique la información de la cuenta bancaria</p>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cuenta</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.numeroCuenta}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, numeroCuenta: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cuenta</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.numeroCuenta}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, numeroCuenta: e.target.value })}
+                    placeholder="1234567890123456"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CLABE</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.clabe}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, clabe: e.target.value })}
+                    placeholder="012345678901234567"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.sucursal}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, sucursal: e.target.value })}
+                    placeholder="Centro Histórico"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.cliente}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, cliente: e.target.value })}
+                    placeholder="Nombre del cliente"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                  <input
+                    type="text"
+                    value={cuentaFormData.telefono}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, telefono: e.target.value })}
+                    placeholder="+52 55 1234 5678"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Correo</label>
+                  <input
+                    type="email"
+                    value={cuentaFormData.correo}
+                    onChange={(e) => setCuentaFormData({ ...cuentaFormData, correo: e.target.value })}
+                    placeholder="cliente@email.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CLABE</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.clabe}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, clabe: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.sucursal}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, sucursal: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.cliente}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, cliente: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input
-                  type="text"
-                  value={cuentaFormData.telefono}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, telefono: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-                <input
-                  type="email"
-                  value={cuentaFormData.correo}
-                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, correo: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Firmante Autorizado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Firmante</label>
                 <input
                   type="text"
                   value={cuentaFormData.firmante}
                   onChange={(e) => setCuentaFormData({ ...cuentaFormData, firmante: e.target.value })}
+                  placeholder="Nombre del firmante autorizado"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Estado de la Cuenta</label>
-                  <p className="text-xs text-gray-500">Determina si la cuenta está activa o suspendida</p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
                 <select
                   value={cuentaFormData.estatus}
                   onChange={(e) => setCuentaFormData({ ...cuentaFormData, estatus: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="Activa">Activa</option>
                   <option value="Suspendida">Suspendida</option>
@@ -1405,7 +1607,8 @@ const BancaSegundoPiso = () => {
               </button>
               <button
                 onClick={handleUpdateCuenta}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                disabled={!cuentaFormData.numeroCuenta || !cuentaFormData.clabe || !cuentaFormData.cliente}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 Actualizar Cuenta
               </button>
