@@ -284,9 +284,9 @@ const PanelControl = () => {
   const Dialog = ({ children, open, onOpenChange }) => {
     if (!open) return null;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => onOpenChange(false)} />
-        <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           {children}
         </div>
       </div>
@@ -294,7 +294,7 @@ const PanelControl = () => {
   };
 
   const DialogContent = ({ children, className = "" }) => (
-    <div className={`p-6 ${className}`}>
+    <div className={`bg-white rounded-lg shadow-lg p-6 w-full ${className}`}>
       {children}
     </div>
   );
@@ -323,15 +323,59 @@ const PanelControl = () => {
     </div>
   );
 
-  const Select = ({ children, onValueChange }) => (
-    <div className="relative">
-      {children}
-    </div>
-  );
+  const Select = ({ children, onValueChange, value, defaultValue }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [selectedValue, setSelectedValue] = React.useState(value || defaultValue || '');
+    const [selectedLabel, setSelectedLabel] = React.useState('');
+    const selectRef = React.useRef(null);
 
-  const SelectTrigger = ({ children }) => (
-    <button className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-      {children}
+    React.useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (selectRef.current && !selectRef.current.contains(event.target)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleSelect = (val, label) => {
+      setSelectedValue(val);
+      setSelectedLabel(label);
+      setIsOpen(false);
+      if (onValueChange) onValueChange(val);
+    };
+
+    return (
+      <div className="relative" ref={selectRef}>
+        {React.Children.map(children, child => {
+          if (child.type === SelectTrigger) {
+            return React.cloneElement(child, {
+              onClick: () => setIsOpen(!isOpen),
+              selectedLabel,
+            });
+          }
+          if (child.type === SelectContent) {
+            return isOpen ? React.cloneElement(child, {
+              onSelect: handleSelect,
+            }) : null;
+          }
+          return child;
+        })}
+      </div>
+    );
+  };
+
+  const SelectTrigger = ({ children, onClick, selectedLabel }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    >
+      {selectedLabel ? <span className="text-gray-900">{selectedLabel}</span> : children}
+      <svg className="h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
     </button>
   );
 
@@ -339,14 +383,22 @@ const PanelControl = () => {
     <span className="text-gray-500">{placeholder}</span>
   );
 
-  const SelectContent = ({ children }) => (
-    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-      {children}
+  const SelectContent = ({ children, onSelect }) => (
+    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+      {React.Children.map(children, child => {
+        if (child.type === SelectItem) {
+          return React.cloneElement(child, { onSelect });
+        }
+        return child;
+      })}
     </div>
   );
 
-  const SelectItem = ({ children, value }) => (
-    <div className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer">
+  const SelectItem = ({ children, value, onSelect }) => (
+    <div
+      onClick={() => onSelect(value, children)}
+      className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+    >
       {children}
     </div>
   );
@@ -915,16 +967,18 @@ const PanelControl = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Permisos del Usuario</Label>
-                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-4 border rounded-lg">
-                    {availablePermissions.map((permission) => (
-                      <div key={permission.id} className="flex items-center space-x-2">
-                        <input type="checkbox" id={permission.id} className="rounded" />
-                        <Label htmlFor={permission.id} className="text-sm">
-                          <span className="font-medium">{permission.name}</span>
-                          <span className="text-gray-500 ml-1">({permission.category})</span>
-                        </Label>
-                      </div>
-                    ))}
+                  <div className="max-h-48 overflow-y-auto p-4 border rounded-lg bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {availablePermissions.map((permission) => (
+                        <div key={permission.id} className="flex items-start space-x-2">
+                          <input type="checkbox" id={permission.id} className="rounded mt-0.5 flex-shrink-0" />
+                          <Label htmlFor={permission.id} className="text-sm cursor-pointer">
+                            <span className="font-medium">{permission.name}</span>
+                            <span className="text-gray-500 ml-1">({permission.category})</span>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -981,16 +1035,18 @@ const PanelControl = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Permisos del Rol</Label>
-                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-4 border rounded-lg">
-                    {availablePermissions.map((permission) => (
-                      <div key={permission.id} className="flex items-center space-x-2">
-                        <input type="checkbox" id={`role-${permission.id}`} className="rounded" />
-                        <Label htmlFor={`role-${permission.id}`} className="text-sm">
-                          <span className="font-medium">{permission.name}</span>
-                          <span className="text-gray-500 ml-1">({permission.category})</span>
-                        </Label>
-                      </div>
-                    ))}
+                  <div className="max-h-48 overflow-y-auto p-4 border rounded-lg bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {availablePermissions.map((permission) => (
+                        <div key={permission.id} className="flex items-start space-x-2">
+                          <input type="checkbox" id={`role-${permission.id}`} className="rounded mt-0.5 flex-shrink-0" />
+                          <Label htmlFor={`role-${permission.id}`} className="text-sm cursor-pointer">
+                            <span className="font-medium">{permission.name}</span>
+                            <span className="text-gray-500 ml-1">({permission.category})</span>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

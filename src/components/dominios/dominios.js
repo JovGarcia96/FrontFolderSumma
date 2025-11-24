@@ -48,7 +48,7 @@ const Dominios = () => {
       administrador: "Carlos Rodríguez",
       email: "admin@orion.com.mx",
       telefono: "+52 55 1234 5678",
-      categoria: "Corporativo",
+      categoria: "Tecnologia",
       trafico: "Alto",
       certificadoSSL: "Let's Encrypt",
       fechaRenovacion: "15/06/2025"
@@ -120,12 +120,29 @@ const Dominios = () => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [selectedDominioInfo, setSelectedDominioInfo] = useState(null);
   const [editingDominio, setEditingDominio] = useState(null);
+  const [deletingDominio, setDeletingDominio] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
   const [formData, setFormData] = useState({
     nombreDominio: "",
     descripcion: "",
+    registrador: "",
+    hosting: "",
+    servidorDNS: "",
+    ipAddress: "",
+    administrador: "",
+    email: "",
+    telefono: "",
+    fechaVencimiento: "",
+    fechaRenovacion: "",
+    categoria: "Tecnologia",
+    ssl: true,
+    certificadoSSL: "Let's Encrypt",
+    trafico: "Medio",
   });
 
   // Función para manejar vista de información
@@ -142,22 +159,38 @@ const Dominios = () => {
       activo: true,
       fechaCreacion: new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
       fechaModificacion: new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
-      registrador: "Por definir",
-      fechaVencimiento: "Por definir",
-      servidorDNS: "Por configurar",
-      ssl: false,
-      ipAddress: "Por asignar",
-      hosting: "Por definir",
-      administrador: "Por asignar",
-      email: "admin@domain.com",
-      telefono: "+52 55 0000 0000",
-      categoria: "General",
-      trafico: "Bajo",
-      certificadoSSL: "Sin certificado",
-      fechaRenovacion: "N/A"
+      registrador: formData.registrador,
+      fechaVencimiento: formData.fechaVencimiento,
+      servidorDNS: formData.servidorDNS,
+      ssl: formData.ssl,
+      ipAddress: formData.ipAddress,
+      hosting: formData.hosting,
+      administrador: formData.administrador,
+      email: formData.email,
+      telefono: formData.telefono,
+      categoria: formData.categoria,
+      trafico: formData.trafico,
+      certificadoSSL: formData.certificadoSSL,
+      fechaRenovacion: formData.fechaRenovacion
     };
     setDominios([...dominios, newDominio]);
-    setFormData({ nombreDominio: "", descripcion: "" });
+    setFormData({
+      nombreDominio: "",
+      descripcion: "",
+      registrador: "",
+      hosting: "",
+      servidorDNS: "",
+      ipAddress: "",
+      administrador: "",
+      email: "",
+      telefono: "",
+      fechaVencimiento: "",
+      fechaRenovacion: "",
+      categoria: "Tecnologia",
+      ssl: true,
+      certificadoSSL: "Let's Encrypt",
+      trafico: "Medio",
+    });
     setIsCreateDialogOpen(false);
   };
 
@@ -166,6 +199,19 @@ const Dominios = () => {
     setFormData({
       nombreDominio: dominio.nombreDominio,
       descripcion: dominio.descripcion,
+      registrador: dominio.registrador,
+      hosting: dominio.hosting,
+      servidorDNS: dominio.servidorDNS,
+      ipAddress: dominio.ipAddress,
+      administrador: dominio.administrador,
+      email: dominio.email,
+      telefono: dominio.telefono,
+      fechaVencimiento: dominio.fechaVencimiento,
+      fechaRenovacion: dominio.fechaRenovacion,
+      categoria: dominio.categoria,
+      ssl: dominio.ssl,
+      certificadoSSL: dominio.certificadoSSL,
+      trafico: dominio.trafico,
     });
     setIsEditDialogOpen(true);
   };
@@ -185,12 +231,37 @@ const Dominios = () => {
       );
       setIsEditDialogOpen(false);
       setEditingDominio(null);
-      setFormData({ nombreDominio: "", descripcion: "" });
+      setFormData({
+        nombreDominio: "",
+        descripcion: "",
+        registrador: "",
+        hosting: "",
+        servidorDNS: "",
+        ipAddress: "",
+        administrador: "",
+        email: "",
+        telefono: "",
+        fechaVencimiento: "",
+        fechaRenovacion: "",
+        categoria: "Tecnologia",
+        ssl: true,
+        certificadoSSL: "Let's Encrypt",
+        trafico: "Medio",
+      });
     }
   };
 
-  const handleDelete = (id) => {
-    setDominios(dominios.filter((dom) => dom.id !== id));
+  const handleDeleteClick = (dominio) => {
+    setDeletingDominio(dominio);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deletingDominio) {
+      setDominios(dominios.filter((dom) => dom.id !== deletingDominio.id));
+      setIsDeleteDialogOpen(false);
+      setDeletingDominio(null);
+    }
   };
 
   const toggleActivo = (id) => {
@@ -215,6 +286,16 @@ const Dominios = () => {
   const dominiosActivos = dominios.filter((dom) => dom.activo).length;
   const dominiosInactivos = dominios.filter((dom) => !dom.activo).length;
   const tasaActividad = totalDominios > 0 ? Math.round((dominiosActivos / totalDominios) * 100) : 0;
+
+  // Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDominios = dominios.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(dominios.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -371,7 +452,7 @@ const Dominios = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {dominios.map((dominio, index) => (
+                    {currentDominios.map((dominio, index) => (
                       <tr
                         key={dominio.id}
                         className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
@@ -443,11 +524,7 @@ const Dominios = () => {
                             </button>
                             {/* Botón Eliminar */}
                             <button
-                              onClick={() => {
-                                if (window.confirm(`¿Está seguro que desea eliminar el dominio "${dominio.nombreDominio}"?`)) {
-                                  handleDelete(dominio.id);
-                                }
-                              }}
+                              onClick={() => handleDeleteClick(dominio)}
                               className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                               title="Eliminar"
                             >
@@ -462,6 +539,44 @@ const Dominios = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+              <div className="text-xs text-gray-600">
+                Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, dominios.length)} de {dominios.length} dominios
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index + 1}
+                    onClick={() => handlePageChange(index + 1)}
+                    className={`px-3 py-1 text-xs border rounded transition-colors ${
+                      currentPage === index + 1
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
         </main>
 
         {/* Footer */}
@@ -478,7 +593,7 @@ const Dominios = () => {
       {/* Modal de Información de Dominio */}
       {showInfoModal && selectedDominioInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header del Modal */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 text-white">
               <div className="flex items-center justify-between">
@@ -493,15 +608,16 @@ const Dominios = () => {
                 </div>
                 <button
                   onClick={() => setShowInfoModal(false)}
-                  className="text-white hover:text-gray-200 transition-colors"
+                  className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors flex-shrink-0"
+                  title="Cerrar"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
             {/* Contenido del Modal */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className="flex-1 p-6 overflow-y-auto">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Información Básica */}
                 <div>
@@ -689,15 +805,13 @@ const Dominios = () => {
             </div>
 
             {/* Footer del Modal */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setShowInfoModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cerrar
-                </button>
-              </div>
+            <div className="flex-shrink-0 px-6 py-4 bg-gray-50 border-t border-gray-300 flex justify-end">
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
@@ -705,34 +819,216 @@ const Dominios = () => {
 
       {/* Create Dialog */}
       {isCreateDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Registrar Nuevo Dominio</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">Registrar Nuevo Dominio</h3>
+              </div>
+              <button onClick={() => setIsCreateDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Complete la información del nuevo dominio</p>
+            <p className="text-sm text-gray-600 mb-6">Complete la información del nuevo dominio</p>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Información Básica */}
+              <div className="col-span-2">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Información Básica
+                </h4>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Dominio</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Dominio *</label>
                 <input
                   type="text"
                   value={formData.nombreDominio}
                   onChange={(e) => setFormData({ ...formData, nombreDominio: e.target.value })}
                   placeholder="Ej: empresa.com.mx"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                <select
+                  value={formData.categoria}
+                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Tecnologia">Tecnología</option>
+                  <option value="Construccion">Construcción</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Salud">Salud</option>
+                  <option value="Inmobiliarias">Inmobiliarias</option>
+                </select>
+              </div>
+              
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  placeholder="Ej: Dominio institucional"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: Dominio institucional principal"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Información Técnica */}
+              <div className="col-span-2 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Server className="h-4 w-4" />
+                  Información Técnica
+                </h4>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Registrador *</label>
+                <input
+                  type="text"
+                  value={formData.registrador}
+                  onChange={(e) => setFormData({ ...formData, registrador: e.target.value })}
+                  placeholder="Ej: GoDaddy México"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hosting *</label>
+                <input
+                  type="text"
+                  value={formData.hosting}
+                  onChange={(e) => setFormData({ ...formData, hosting: e.target.value })}
+                  placeholder="Ej: AWS México"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Servidor DNS *</label>
+                <input
+                  type="text"
+                  value={formData.servidorDNS}
+                  onChange={(e) => setFormData({ ...formData, servidorDNS: e.target.value })}
+                  placeholder="Ej: ns1.dominio.com, ns2.dominio.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dirección IP *</label>
+                <input
+                  type="text"
+                  value={formData.ipAddress}
+                  onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
+                  placeholder="Ej: 192.168.1.100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Certificado SSL *</label>
+                <select
+                  value={formData.certificadoSSL}
+                  onChange={(e) => setFormData({ ...formData, certificadoSSL: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Let's Encrypt">Let's Encrypt</option>
+                  <option value="Comodo SSL">Comodo SSL</option>
+                  <option value="DigiCert">DigiCert</option>
+                  <option value="Sin certificado">Sin certificado</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tráfico Estimado</label>
+                <select
+                  value={formData.trafico}
+                  onChange={(e) => setFormData({ ...formData, trafico: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Bajo">Bajo</option>
+                  <option value="Medio">Medio</option>
+                  <option value="Alto">Alto</option>
+                </select>
+              </div>
+
+              {/* Información de Contacto */}
+              <div className="col-span-2 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Información de Contacto
+                </h4>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Administrador *</label>
+                <input
+                  type="text"
+                  value={formData.administrador}
+                  onChange={(e) => setFormData({ ...formData, administrador: e.target.value })}
+                  placeholder="Ej: Carlos Rodríguez"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Ej: admin@dominio.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  placeholder="Ej: +52 55 1234 5678"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
+                <input
+                  type="text"
+                  value={formData.fechaVencimiento}
+                  onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
+                  placeholder="Ej: 24/07/2026, 23:59:59"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Próxima Renovación</label>
+                <input
+                  type="text"
+                  value={formData.fechaRenovacion}
+                  onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
+                  placeholder="Ej: 15/06/2025"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="ssl"
+                  checked={formData.ssl}
+                  onChange={(e) => setFormData({ ...formData, ssl: e.target.checked })}
+                  className="rounded"
+                />
+                <label htmlFor="ssl" className="text-sm font-medium text-gray-700">SSL Habilitado</label>
               </div>
             </div>
             
@@ -756,32 +1052,205 @@ const Dominios = () => {
 
       {/* Edit Dialog */}
       {isEditDialogOpen && editingDominio && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Edit className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Editar Dominio</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Edit className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">Editar Dominio</h3>
+              </div>
+              <button onClick={() => setIsEditDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Modifique la información del dominio</p>
+            <p className="text-sm text-gray-600 mb-6">Modifique la información del dominio</p>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Información Básica */}
+              <div className="col-span-2">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Información Básica
+                </h4>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Dominio</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Dominio *</label>
                 <input
                   type="text"
                   value={formData.nombreDominio}
                   onChange={(e) => setFormData({ ...formData, nombreDominio: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                <select
+                  value={formData.categoria}
+                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Tecnologia">Tecnología</option>
+                  <option value="Construccion">Construcción</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Salud">Salud</option>
+                  <option value="Inmobiliarias">Inmobiliarias</option>
+                </select>
+              </div>
+              
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Información Técnica */}
+              <div className="col-span-2 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Server className="h-4 w-4" />
+                  Información Técnica
+                </h4>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Registrador *</label>
+                <input
+                  type="text"
+                  value={formData.registrador}
+                  onChange={(e) => setFormData({ ...formData, registrador: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hosting *</label>
+                <input
+                  type="text"
+                  value={formData.hosting}
+                  onChange={(e) => setFormData({ ...formData, hosting: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Servidor DNS *</label>
+                <input
+                  type="text"
+                  value={formData.servidorDNS}
+                  onChange={(e) => setFormData({ ...formData, servidorDNS: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dirección IP *</label>
+                <input
+                  type="text"
+                  value={formData.ipAddress}
+                  onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Certificado SSL *</label>
+                <select
+                  value={formData.certificadoSSL}
+                  onChange={(e) => setFormData({ ...formData, certificadoSSL: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Let's Encrypt">Let's Encrypt</option>
+                  <option value="Comodo SSL">Comodo SSL</option>
+                  <option value="DigiCert">DigiCert</option>
+                  <option value="Sin certificado">Sin certificado</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tráfico Estimado</label>
+                <select
+                  value={formData.trafico}
+                  onChange={(e) => setFormData({ ...formData, trafico: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Bajo">Bajo</option>
+                  <option value="Medio">Medio</option>
+                  <option value="Alto">Alto</option>
+                </select>
+              </div>
+
+              {/* Información de Contacto */}
+              <div className="col-span-2 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Información de Contacto
+                </h4>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Administrador *</label>
+                <input
+                  type="text"
+                  value={formData.administrador}
+                  onChange={(e) => setFormData({ ...formData, administrador: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
+                <input
+                  type="text"
+                  value={formData.fechaVencimiento}
+                  onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Próxima Renovación</label>
+                <input
+                  type="text"
+                  value={formData.fechaRenovacion}
+                  onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="ssl-edit"
+                  checked={formData.ssl}
+                  onChange={(e) => setFormData({ ...formData, ssl: e.target.checked })}
+                  className="rounded"
+                />
+                <label htmlFor="ssl-edit" className="text-sm font-medium text-gray-700">SSL Habilitado</label>
               </div>
             </div>
             
@@ -797,6 +1266,47 @@ const Dominios = () => {
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Actualizar Dominio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dialog */}
+      {isDeleteDialogOpen && deletingDominio && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Eliminar Dominio</h3>
+                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-700">
+                ¿Está seguro que desea eliminar el dominio <strong className="text-red-700">{deletingDominio.nombreDominio}</strong>?
+              </p>
+              <p className="text-xs text-gray-600 mt-2">
+                Se eliminará toda la información asociada incluyendo configuraciones técnicas y datos de contacto.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Eliminar Dominio
               </button>
             </div>
           </div>
