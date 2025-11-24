@@ -76,6 +76,8 @@ const BancaPrimerPiso = () => {
           cliente: "Grupo Summa S.A. de C.V.",
           telefono: "+52 55 1234 5678",
           correo: "tesoreria@gruposumma.com",
+          direccion: "Av. Paseo de la Reforma 250, Juárez, CDMX",
+          accionistas: "María González López, Juan Pérez Martínez",
           firmante: "María González López",
           estatus: "Activa"
         },
@@ -87,6 +89,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Financiera S.A.",
           telefono: "+52 55 8765 4321",
           correo: "operaciones@summafinanciera.com",
+          direccion: "Av. Presidente Masaryk 111, Polanco, CDMX",
+          accionistas: "Carlos Rodríguez Sánchez, Ana López García",
           firmante: "Carlos Rodríguez Sánchez",
           estatus: "Activa"
         }
@@ -114,6 +118,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Capital S.A. de C.V.",
           telefono: "+52 55 2345 6789",
           correo: "capital@summacapital.com",
+          direccion: "Av. Santa Fe 495, Santa Fe, CDMX",
+          accionistas: "Laura Jiménez Torres, Roberto Martínez Cruz",
           firmante: "Laura Jiménez Torres",
           estatus: "Activa"
         }
@@ -141,6 +147,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Inversiones S.A.",
           telefono: "+52 55 3456 7890",
           correo: "inversiones@summainversiones.com",
+          direccion: "Av. Álvaro Obregón 185, Roma Norte, CDMX",
+          accionistas: "Miguel Ángel Vargas, Patricia Fernández López",
           firmante: "Miguel Ángel Vargas",
           estatus: "Suspendida"
         },
@@ -152,6 +160,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Holdings S.A. de C.V.",
           telefono: "+52 55 4567 8901",
           correo: "holdings@summaholdings.com",
+          direccion: "Av. Nuevo León 150, Condesa, CDMX",
+          accionistas: "Isabel Ramírez Flores, Fernando García Ruiz",
           firmante: "Isabel Ramírez Flores",
           estatus: "Activa"
         }
@@ -179,6 +189,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Corporativo S.A.",
           telefono: "+52 55 5678 9012",
           correo: "corporativo@summacorp.com",
+          direccion: "Av. Insurgentes Sur 1605, San José Insurgentes, CDMX",
+          accionistas: "Diego Herrera Campos, Sofía Mendoza Ruiz",
           firmante: "Diego Herrera Campos",
           estatus: "Activa"
         }
@@ -206,6 +218,8 @@ const BancaPrimerPiso = () => {
           cliente: "Summa Servicios S.A. de C.V.",
           telefono: "+52 55 6789 0123",
           correo: "servicios@summaservicios.com",
+          direccion: "Blvd. Interlomas 5, Interlomas, Huixquilucan, Edo. Méx.",
+          accionistas: "Ana Patricia Moreno, Jorge Luis Castillo",
           firmante: "Ana Patricia Moreno",
           estatus: "Inactiva"
         }
@@ -275,8 +289,12 @@ const BancaPrimerPiso = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateCuentaDialogOpen, setIsCreateCuentaDialogOpen] = useState(false);
   const [isEditCuentaDialogOpen, setIsEditCuentaDialogOpen] = useState(false);
+  const [isViewCuentaDialogOpen, setIsViewCuentaDialogOpen] = useState(false); // Modal para ver detalles de cuenta
+  const [isDeleteCuentaDialogOpen, setIsDeleteCuentaDialogOpen] = useState(false); // Modal para confirmar eliminación
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false); // Nuevo estado para modal de información
   const [viewingBanco, setViewingBanco] = useState(null); // Banco que se está viendo
+  const [viewingCuenta, setViewingCuenta] = useState(null); // Cuenta que se está viendo en detalle
+  const [deletingCuentaId, setDeletingCuentaId] = useState(null); // ID de cuenta a eliminar
   const [editingBanco, setEditingBanco] = useState(null);
   const [editingCuenta, setEditingCuenta] = useState(null);
   const [formData, setFormData] = useState({
@@ -291,6 +309,8 @@ const BancaPrimerPiso = () => {
     cliente: "",
     telefono: "",
     correo: "",
+    direccion: "",
+    accionistas: "",
     firmante: "",
     estatus: "Activa"
   });
@@ -422,6 +442,8 @@ const BancaPrimerPiso = () => {
       cliente: "",
       telefono: "",
       correo: "",
+      direccion: "",
+      accionistas: "",
       firmante: "",
       estatus: "Activa"
     });
@@ -432,6 +454,33 @@ const BancaPrimerPiso = () => {
     setEditingCuenta(cuenta);
     setCuentaFormData(cuenta);
     setIsEditCuentaDialogOpen(true);
+  };
+
+  // Nueva función para ver detalles de cuenta
+  const handleViewCuenta = (cuenta) => {
+    setViewingCuenta(cuenta);
+    setIsViewCuentaDialogOpen(true);
+  };
+
+  // Nueva función para abrir modal de eliminar
+  const openDeleteModal = (cuentaId) => {
+    setDeletingCuentaId(cuentaId);
+    setIsDeleteCuentaDialogOpen(true);
+  };
+
+  // Nueva función para confirmar eliminación
+  const confirmDeleteCuenta = () => {
+    if (!deletingCuentaId || !selectedBanco) return;
+    
+    const updatedCuentas = selectedBanco.cuentas.filter(cuenta => cuenta.id !== deletingCuentaId);
+    const updatedBancos = bancos.map(banco =>
+      banco.id === selectedBanco.id ? { ...banco, cuentas: updatedCuentas } : banco
+    );
+    
+    setBancos(updatedBancos);
+    setSelectedBanco({ ...selectedBanco, cuentas: updatedCuentas });
+    setIsDeleteCuentaDialogOpen(false);
+    setDeletingCuentaId(null);
   };
 
   const handleUpdateCuenta = () => {
@@ -455,6 +504,8 @@ const BancaPrimerPiso = () => {
       cliente: "",
       telefono: "",
       correo: "",
+      direccion: "",
+      accionistas: "",
       firmante: "",
       estatus: "Activa"
     });
@@ -902,6 +953,10 @@ const BancaPrimerPiso = () => {
                           <th className="text-left py-3 px-4 font-medium text-gray-900">Número de Cuenta</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-900">CLABE</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-900">Cliente</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Correo</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Teléfono</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Dirección</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Accionistas</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-900">Sucursal</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-900">Estado</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-900">Acciones</th>
@@ -920,10 +975,19 @@ const BancaPrimerPiso = () => {
                               <span className="font-mono text-sm text-gray-600">{cuenta.clabe}</span>
                             </td>
                             <td className="py-4 px-4">
-                              <div>
-                                <div className="font-medium text-gray-900">{cuenta.cliente}</div>
-                                <div className="text-sm text-gray-500">{cuenta.correo}</div>
-                              </div>
+                              <div className="font-medium text-gray-900">{cuenta.cliente}</div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">{cuenta.correo || 'N/A'}</span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">{cuenta.telefono || 'N/A'}</span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">{cuenta.direccion || 'N/A'}</span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">{cuenta.accionistas || 'N/A'}</span>
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-2">
@@ -943,6 +1007,13 @@ const BancaPrimerPiso = () => {
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-2">
                                 <button
+                                  onClick={() => handleViewCuenta(cuenta)}
+                                  className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                                  title="Ver"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button
                                   onClick={() => handleEditCuenta(cuenta)}
                                   className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                                   title="Editar"
@@ -950,7 +1021,7 @@ const BancaPrimerPiso = () => {
                                   <Edit className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteCuenta(cuenta.id)}
+                                  onClick={() => openDeleteModal(cuenta.id)}
                                   className="p-1 text-red-600 hover:text-red-800 transition-colors"
                                   title="Eliminar"
                                 >
@@ -1409,6 +1480,32 @@ const BancaPrimerPiso = () => {
                 />
               </div>
               
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  value={cuentaFormData.direccion}
+                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, direccion: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Calle, número, colonia, ciudad"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Accionistas
+                </label>
+                <textarea
+                  value={cuentaFormData.accionistas}
+                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, accionistas: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Nombres de los accionistas separados por comas"
+                  rows="2"
+                />
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Firmante
@@ -1546,6 +1643,32 @@ const BancaPrimerPiso = () => {
                 />
               </div>
               
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  value={cuentaFormData.direccion}
+                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, direccion: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Calle, número, colonia, ciudad"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Accionistas
+                </label>
+                <textarea
+                  value={cuentaFormData.accionistas}
+                  onChange={(e) => setCuentaFormData({ ...cuentaFormData, accionistas: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Nombres de los accionistas separados por comas"
+                  rows="2"
+                />
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Firmante
@@ -1587,6 +1710,133 @@ const BancaPrimerPiso = () => {
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
               >
                 Actualizar Cuenta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Ver Detalles de Cuenta */}
+      {isViewCuentaDialogOpen && viewingCuenta && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Detalles de la Cuenta</h3>
+              <button
+                onClick={() => setIsViewCuentaDialogOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Número de Cuenta</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.numeroCuenta}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">CLABE</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.clabe}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Sucursal</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.sucursal}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Cliente</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.cliente}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Teléfono</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.telefono || 'No especificado'}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Correo</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.correo || 'No especificado'}</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded">
+                <p className="text-sm text-gray-600 mb-1">Dirección</p>
+                <p className="font-semibold text-gray-800">{viewingCuenta.direccion || 'No especificada'}</p>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded">
+                <p className="text-sm text-gray-600 mb-1">Accionistas</p>
+                <p className="font-semibold text-gray-800">{viewingCuenta.accionistas || 'No especificados'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Firmante</p>
+                  <p className="font-semibold text-gray-800">{viewingCuenta.firmante}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 mb-1">Estatus</p>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                    viewingCuenta.estatus === 'Activa' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {viewingCuenta.estatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setIsViewCuentaDialogOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Confirmar Eliminación de Cuenta */}
+      {isDeleteCuentaDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800">Eliminar Cuenta</h3>
+                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700">
+                ¿Está seguro que desea eliminar esta cuenta bancaria? Todos los datos asociados se perderán permanentemente.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIsDeleteCuentaDialogOpen(false);
+                  setDeletingCuentaId(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteCuenta}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Eliminar Cuenta
               </button>
             </div>
           </div>

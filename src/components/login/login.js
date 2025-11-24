@@ -299,7 +299,7 @@ const Login = () => {
             {/* Fallback text si no carga la imagen */}
             <div className="hidden">
               {/* <div className="text-6xl font-bold mb-4">SUMMA</div> */}
-              {/* <div className="text-lg tracking-wider">BUSINESS SOLUTIONS</div> */}
+              {/* <div className="text-lg tracking-wider">BUSINESS SOLUTIONS</div>*/}
             </div>
           </div>
           

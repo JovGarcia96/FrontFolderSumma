@@ -81,8 +81,8 @@ const Sidebar = () => {
     { 
       icon: Settings, 
       label: 'Configuraciones', 
-      path: '/configuraciones',
-      active: isActiveRoute('/configuraciones')
+      path: '/paneldecontrol',
+      active: isActiveRoute('/paneldecontrol')
     },
     { 
       icon: Shield, 
