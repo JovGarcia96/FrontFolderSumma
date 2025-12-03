@@ -114,19 +114,37 @@ const PanelControl = () => {
     },
   ];
 
-  const availablePermissions = [
-    { id: "usuarios.crear", name: "Crear Usuarios", category: "Usuarios" },
-    { id: "usuarios.editar", name: "Editar Usuarios", category: "Usuarios" },
-    { id: "usuarios.eliminar", name: "Eliminar Usuarios", category: "Usuarios" },
-    { id: "usuarios.ver", name: "Ver Usuarios", category: "Usuarios" },
-    { id: "documentos.crear", name: "Crear Documentos", category: "Documentos" },
-    { id: "documentos.editar", name: "Editar Documentos", category: "Documentos" },
-    { id: "documentos.eliminar", name: "Eliminar Documentos", category: "Documentos" },
-    { id: "documentos.ver", name: "Ver Documentos", category: "Documentos" },
-    { id: "reportes.generar", name: "Generar Reportes", category: "Reportes" },
-    { id: "reportes.exportar", name: "Exportar Reportes", category: "Reportes" },
-    { id: "sistema.configurar", name: "Configurar Sistema", category: "Sistema" },
-    { id: "permisos.gestionar", name: "Gestionar Permisos", category: "Sistema" },
+  // Permisos para el modal de Crear Rol (Módulos del Sistema)
+  const rolePermissions = [
+    { id: "banca-primer-piso", name: "Banca Primer Piso", category: "Módulos" },
+    { id: "banca-segundo-piso", name: "Banca Segundo Piso", category: "Módulos" },
+    { id: "inicio", name: "Inicio", category: "Módulos" },
+    { id: "mis-archivos", name: "Mis Archivos", category: "Módulos" },
+    { id: "compartidos", name: "Compartidos", category: "Módulos" },
+    { id: "recientes", name: "Recientes", category: "Módulos" },
+    { id: "configuraciones", name: "Configuraciones", category: "Módulos" },
+    { id: "tramites-notariales", name: "Trámites Notariales", category: "Módulos" },
+    { id: "panel-control", name: "Panel de Control", category: "Módulos" },
+    { id: "banco", name: "Banco", category: "Módulos" },
+    { id: "giros-comerciales", name: "Giros Comerciales", category: "Módulos" },
+    { id: "dominios", name: "Dominios", category: "Módulos" },
+    { id: "enviar-notificaciones", name: "Enviar Notificaciones", category: "Módulos" },
+  ];
+
+  // Permisos para el modal de Crear Usuario (Acciones sobre Documentos y Carpetas)
+  const userPermissions = [
+    { id: "crear-documento", name: "Crear Documento", category: "Documentos" },
+    { id: "editar-documento", name: "Editar Documento", category: "Documentos" },
+    { id: "ver-documento", name: "Ver Documento", category: "Documentos" },
+    { id: "eliminar-documento", name: "Eliminar Documento", category: "Documentos" },
+    { id: "crear-carpeta", name: "Crear Carpeta", category: "Carpetas" },
+    { id: "mover-carpeta", name: "Mover Carpeta", category: "Carpetas" },
+    { id: "copiar-carpeta", name: "Copiar Carpeta", category: "Carpetas" },
+    { id: "pegar-carpeta", name: "Pegar Carpeta", category: "Carpetas" },
+    { id: "eliminar-carpeta", name: "Eliminar Carpeta", category: "Carpetas" },
+    { id: "imprimir-documento", name: "Imprimir Documento", category: "Documentos" },
+    { id: "ver-usuario-carpeta-compartida", name: "Ver Usuario con la que Comparte Carpeta", category: "Compartir" },
+    { id: "ver-usuario-documento-compartido", name: "Ver Usuario con la que Comparte Documento", category: "Compartir" },
   ];
 
   const handleDeleteConfirm = () => {
@@ -945,9 +963,11 @@ const PanelControl = () => {
                         <SelectValue placeholder="Selecciona un rol" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="admin-total">Administrador Total</SelectItem>
                         <SelectItem value="admin">Administrador</SelectItem>
                         <SelectItem value="supervisor">Supervisor</SelectItem>
-                        <SelectItem value="operador">Operador</SelectItem>
+                        <SelectItem value="operador-avanzado">Operador Avanzado</SelectItem>
+                        <SelectItem value="operador-basico">Operador Básico</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -958,9 +978,11 @@ const PanelControl = () => {
                         <SelectValue placeholder="Selecciona el nivel" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="alto">Alto</SelectItem>
-                        <SelectItem value="medio">Medio</SelectItem>
-                        <SelectItem value="basico">Básico</SelectItem>
+                        <SelectItem value="nivel5">Nivel 5 - Alto</SelectItem>
+                        <SelectItem value="nivel4">Nivel 4 - Alto-Medio</SelectItem>
+                        <SelectItem value="nivel3">Nivel 3 - Medio</SelectItem>
+                        <SelectItem value="nivel2">Nivel 2 - Básico-Medio</SelectItem>
+                        <SelectItem value="nivel1">Nivel 1 - Básico</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -969,7 +991,7 @@ const PanelControl = () => {
                   <Label>Permisos del Usuario</Label>
                   <div className="max-h-48 overflow-y-auto p-4 border rounded-lg bg-gray-50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {availablePermissions.map((permission) => (
+                      {userPermissions.map((permission) => (
                         <div key={permission.id} className="flex items-start space-x-2">
                           <input type="checkbox" id={permission.id} className="rounded mt-0.5 flex-shrink-0" />
                           <Label htmlFor={permission.id} className="text-sm cursor-pointer">
@@ -1017,11 +1039,11 @@ const PanelControl = () => {
                         <SelectValue placeholder="Selecciona el nivel" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="5">Nivel 5 - Administrador Total</SelectItem>
-                        <SelectItem value="4">Nivel 4 - Administrador</SelectItem>
-                        <SelectItem value="3">Nivel 3 - Supervisor</SelectItem>
-                        <SelectItem value="2">Nivel 2 - Operador Avanzado</SelectItem>
-                        <SelectItem value="1">Nivel 1 - Operador Básico</SelectItem>
+                        <SelectItem value="5">Nivel 5 - Alto</SelectItem>
+                        <SelectItem value="4">Nivel 4 - Alto-Medio</SelectItem>
+                        <SelectItem value="3">Nivel 3 - Medio</SelectItem>
+                        <SelectItem value="2">Nivel 2 - Básico-Medio</SelectItem>
+                        <SelectItem value="1">Nivel 1 - Básico</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1037,7 +1059,7 @@ const PanelControl = () => {
                   <Label>Permisos del Rol</Label>
                   <div className="max-h-48 overflow-y-auto p-4 border rounded-lg bg-gray-50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {availablePermissions.map((permission) => (
+                      {rolePermissions.map((permission) => (
                         <div key={permission.id} className="flex items-start space-x-2">
                           <input type="checkbox" id={`role-${permission.id}`} className="rounded mt-0.5 flex-shrink-0" />
                           <Label htmlFor={`role-${permission.id}`} className="text-sm cursor-pointer">

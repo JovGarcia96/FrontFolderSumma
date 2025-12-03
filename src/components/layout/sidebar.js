@@ -85,12 +85,6 @@ const Sidebar = () => {
       active: isActiveRoute('/paneldecontrol')
     },
     { 
-      icon: Shield, 
-      label: 'Control de Permisos', 
-      path: '/control-permisos', 
-      active: isActiveRoute('/control-permisos')
-    },
-    { 
       icon: FileText, 
       label: 'Trámites Notariales', 
       path: '/tramites_notariales', 

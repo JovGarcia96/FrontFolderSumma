@@ -45,9 +45,7 @@ const CreateDialog = React.memo(({
   isOpen, 
   onClose, 
   formData, 
-  onNombreBancoChange, 
-  onCodigoBancoChange, 
-  onActivoChange, 
+  onFormChange,
   onCreate,
   isFormValid 
 }) => {
@@ -55,7 +53,7 @@ const CreateDialog = React.memo(({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             Registrar Nueva Entidad Bancaria
@@ -73,37 +71,140 @@ const CreateDialog = React.memo(({
         </p>
         
         <div className="space-y-4">
+          {/* Información Básica */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del Banco *
+              </label>
+              <input
+                type="text"
+                value={formData.nombreBanco}
+                onChange={(e) => onFormChange('nombreBanco', e.target.value)}
+                placeholder="Ej: BBVA"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Código de Identificación *
+              </label>
+              <input
+                type="text"
+                value={formData.codigoBanco}
+                onChange={(e) => onFormChange('codigoBanco', e.target.value)}
+                placeholder="Ej: F001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                autoComplete="off"
+                maxLength={10}
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre del Banco
+              Descripción
             </label>
             <input
               type="text"
-              value={formData.nombreBanco}
-              onChange={onNombreBancoChange}
-              placeholder="Ej: BBVA"
+              value={formData.descripcion}
+              onChange={(e) => onFormChange('descripcion', e.target.value)}
+              placeholder="Ej: Banco Bilbao Vizcaya Argentaria México"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoComplete="off"
-              autoFocus
             />
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Código de Identificación
-            </label>
-            <input
-              type="text"
-              value={formData.codigoBanco}
-              onChange={onCodigoBancoChange}
-              placeholder="Ej: BN001, BBVA002, SCO003"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-              autoComplete="off"
-              maxLength={10}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Ingrese un código único para identificar la entidad bancaria
-            </p>
+
+          {/* Información de Contacto */}
+          <div className="pt-4 border-t">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Información de Contacto</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  value={formData.direccion}
+                  onChange={(e) => onFormChange('direccion', e.target.value)}
+                  placeholder="Av. Universidad 1200, Col. Xoco, Ciudad de México"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.telefono}
+                    onChange={(e) => onFormChange('telefono', e.target.value)}
+                    placeholder="+52 55 5621 3344"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => onFormChange('email', e.target.value)}
+                    placeholder="contacto@bbva.mx"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sitio Web
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sitioWeb}
+                    onChange={(e) => onFormChange('sitioWeb', e.target.value)}
+                    placeholder="www.bbva.mx"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    RFC
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.rfc}
+                    onChange={(e) => onFormChange('rfc', e.target.value)}
+                    placeholder="BBV970519DU8"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    maxLength={13}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Representante Legal
+                </label>
+                <input
+                  type="text"
+                  value={formData.representanteLegal}
+                  onChange={(e) => onFormChange('representanteLegal', e.target.value)}
+                  placeholder="Carlos Rodríguez Hernández"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
           
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -115,7 +216,7 @@ const CreateDialog = React.memo(({
               <input
                 type="checkbox"
                 checked={formData.activo}
-                onChange={onActivoChange}
+                onChange={(e) => onFormChange('activo', e.target.checked)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -148,9 +249,7 @@ const EditDialog = React.memo(({
   isOpen, 
   onClose, 
   formData, 
-  onNombreBancoChange, 
-  onCodigoBancoChange, 
-  onActivoChange, 
+  onFormChange,
   onUpdate,
   isFormValid 
 }) => {
@@ -158,7 +257,7 @@ const EditDialog = React.memo(({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             Editar Entidad Bancaria
@@ -176,37 +275,140 @@ const EditDialog = React.memo(({
         </p>
         
         <div className="space-y-4">
+          {/* Información Básica */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del Banco *
+              </label>
+              <input
+                type="text"
+                value={formData.nombreBanco}
+                onChange={(e) => onFormChange('nombreBanco', e.target.value)}
+                placeholder="Ej: BBVA"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Código de Identificación *
+              </label>
+              <input
+                type="text"
+                value={formData.codigoBanco}
+                onChange={(e) => onFormChange('codigoBanco', e.target.value)}
+                placeholder="Ej: F001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                autoComplete="off"
+                maxLength={10}
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre del Banco
+              Descripción
             </label>
             <input
               type="text"
-              value={formData.nombreBanco}
-              onChange={onNombreBancoChange}
-              placeholder="Ej: BBVA"
+              value={formData.descripcion}
+              onChange={(e) => onFormChange('descripcion', e.target.value)}
+              placeholder="Ej: Banco Bilbao Vizcaya Argentaria México"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoComplete="off"
-              autoFocus
             />
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Código de Identificación
-            </label>
-            <input
-              type="text"
-              value={formData.codigoBanco}
-              onChange={onCodigoBancoChange}
-              placeholder="Ej: BN001, BBVA002, SCO003"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-              autoComplete="off"
-              maxLength={10}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Ingrese un código único para identificar la entidad bancaria
-            </p>
+
+          {/* Información de Contacto */}
+          <div className="pt-4 border-t">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Información de Contacto</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  value={formData.direccion}
+                  onChange={(e) => onFormChange('direccion', e.target.value)}
+                  placeholder="Av. Universidad 1200, Col. Xoco, Ciudad de México"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.telefono}
+                    onChange={(e) => onFormChange('telefono', e.target.value)}
+                    placeholder="+52 55 5621 3344"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => onFormChange('email', e.target.value)}
+                    placeholder="contacto@bbva.mx"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sitio Web
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sitioWeb}
+                    onChange={(e) => onFormChange('sitioWeb', e.target.value)}
+                    placeholder="www.bbva.mx"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    RFC
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.rfc}
+                    onChange={(e) => onFormChange('rfc', e.target.value)}
+                    placeholder="BBV970519DU8"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    maxLength={13}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Representante Legal
+                </label>
+                <input
+                  type="text"
+                  value={formData.representanteLegal}
+                  onChange={(e) => onFormChange('representanteLegal', e.target.value)}
+                  placeholder="Carlos Rodríguez Hernández"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
           
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -218,7 +420,7 @@ const EditDialog = React.memo(({
               <input
                 type="checkbox"
                 checked={formData.activo}
-                onChange={onActivoChange}
+                onChange={(e) => onFormChange('activo', e.target.checked)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -371,6 +573,13 @@ const Bank = () => {
   const [formData, setFormData] = useState({
     nombreBanco: "",
     codigoBanco: "",
+    descripcion: "",
+    direccion: "",
+    telefono: "",
+    email: "",
+    sitioWeb: "",
+    rfc: "",
+    representanteLegal: "",
     activo: true,
   });
 
@@ -410,19 +619,9 @@ const Bank = () => {
     );
   }, [bancos]);
 
-  // Handlers optimizados con useCallback
-  const handleNombreBancoChange = useCallback((e) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, nombreBanco: value }));
-  }, []);
-
-  const handleCodigoBancoChange = useCallback((e) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, codigoBanco: value }));
-  }, []);
-
-  const handleActivoChange = useCallback((e) => {
-    setFormData(prev => ({ ...prev, activo: e.target.checked }));
+  // Handler genérico para cambios en el formulario
+  const handleFormChange = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
   const handleNavigation = useCallback((path) => {
@@ -470,20 +669,31 @@ const Bank = () => {
       id: Math.max(...bancos.map((b) => b.id)) + 1,
       nombreBanco: formData.nombreBanco.trim(),
       codigoBanco: formData.codigoBanco.trim(),
+      descripcion: formData.descripcion.trim() || "Institución bancaria",
+      direccion: formData.direccion.trim() || "Dirección por definir",
+      telefono: formData.telefono.trim() || "+52 55 0000 0000",
+      email: formData.email.trim() || "contacto@banco.mx",
+      sitioWeb: formData.sitioWeb.trim() || "www.banco.mx",
+      rfc: formData.rfc.trim() || "BCO970519DU0",
+      representanteLegal: formData.representanteLegal.trim() || "Por definir",
       activo: formData.activo,
       fechaCreacion: new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
-      icono: getBankIcon(formData.nombreBanco.trim()),
-      direccion: "Dirección por definir",
-      telefono: "+52 55 0000 0000",
-      email: "contacto@banco.mx",
-      sitioWeb: "www.banco.mx",
-      rfc: "BCO970519DU0",
-      representanteLegal: "Por definir",
-      descripcion: "Institución bancaria"
+      icono: getBankIcon(formData.nombreBanco.trim())
     };
 
     setBancos(prev => [...prev, newBanco]);
-    setFormData({ nombreBanco: "", codigoBanco: "", activo: true });
+    setFormData({ 
+      nombreBanco: "", 
+      codigoBanco: "", 
+      descripcion: "",
+      direccion: "",
+      telefono: "",
+      email: "",
+      sitioWeb: "",
+      rfc: "",
+      representanteLegal: "",
+      activo: true 
+    });
     setIsCreateDialogOpen(false);
   }, [formData, bancos, isCodigoDuplicado, getBankIcon]);
 
@@ -492,6 +702,13 @@ const Bank = () => {
     setFormData({
       nombreBanco: banco.nombreBanco,
       codigoBanco: banco.codigoBanco,
+      descripcion: banco.descripcion || "",
+      direccion: banco.direccion || "",
+      telefono: banco.telefono || "",
+      email: banco.email || "",
+      sitioWeb: banco.sitioWeb || "",
+      rfc: banco.rfc || "",
+      representanteLegal: banco.representanteLegal || "",
       activo: banco.activo,
     });
     setIsEditDialogOpen(true);
@@ -519,6 +736,13 @@ const Bank = () => {
             ...banco,
             nombreBanco: formData.nombreBanco.trim(),
             codigoBanco: formData.codigoBanco.trim(),
+            descripcion: formData.descripcion.trim() || banco.descripcion,
+            direccion: formData.direccion.trim() || banco.direccion,
+            telefono: formData.telefono.trim() || banco.telefono,
+            email: formData.email.trim() || banco.email,
+            sitioWeb: formData.sitioWeb.trim() || banco.sitioWeb,
+            rfc: formData.rfc.trim() || banco.rfc,
+            representanteLegal: formData.representanteLegal.trim() || banco.representanteLegal,
             activo: formData.activo,
             icono: getBankIcon(formData.nombreBanco.trim())
           }
@@ -526,7 +750,18 @@ const Bank = () => {
     ));
 
     setEditingBanco(null);
-    setFormData({ nombreBanco: "", codigoBanco: "", activo: true });
+    setFormData({ 
+      nombreBanco: "", 
+      codigoBanco: "", 
+      descripcion: "",
+      direccion: "",
+      telefono: "",
+      email: "",
+      sitioWeb: "",
+      rfc: "",
+      representanteLegal: "",
+      activo: true 
+    });
     setIsEditDialogOpen(false);
   }, [formData, editingBanco, isCodigoDuplicado, getBankIcon]);
 
@@ -648,8 +883,15 @@ const Bank = () => {
                       <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Banco Fintech</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Código</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Estado Operativo</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Estado</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha de Registro</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Representante Legal</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Dirección</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Teléfono</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Sitio Web</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">RFC</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Información Institucional</th>
                       <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
                     </tr>
                   </thead>
@@ -680,32 +922,46 @@ const Bank = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-sm text-gray-600">
-                            {banco.codigoBanco}
+                          <span className="text-sm text-gray-600 font-mono">{banco.codigoBanco}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            banco.activo 
+                              ? "bg-green-100 text-green-800" 
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {banco.activo ? "Operativo" : "Inactivo"}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              banco.activo 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {banco.activo ? "Operativo" : "Inactivo"}
-                            </span>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={banco.activo}
-                                onChange={() => toggleActivo(banco.id)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                          </div>
+                          <span className="text-sm text-gray-600 font-mono">{banco.fechaCreacion}</span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-sm text-gray-600 font-mono">{banco.fechaCreacion}</span>
+                          <span className="text-sm text-gray-600">{banco.representanteLegal}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600" title={banco.direccion}>
+                            {banco.direccion.length > 40 ? banco.direccion.substring(0, 40) + '...' : banco.direccion}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600">{banco.telefono}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600">{banco.email}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <a href={`https://${banco.sitioWeb}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                            {banco.sitioWeb}
+                          </a>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600 font-mono">{banco.rfc}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600" title={`${banco.nombreBanco} es una institución financiera tradicional que forma parte del sistema bancario mexicano.`}>
+                            {banco.nombreBanco} es una institución financiera...
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-2">
@@ -909,9 +1165,7 @@ const Bank = () => {
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         formData={formData}
-        onNombreBancoChange={handleNombreBancoChange}
-        onCodigoBancoChange={handleCodigoBancoChange}
-        onActivoChange={handleActivoChange}
+        onFormChange={handleFormChange}
         onCreate={handleCreate}
         isFormValid={isFormValid}
       />
@@ -920,9 +1174,7 @@ const Bank = () => {
         isOpen={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
         formData={formData}
-        onNombreBancoChange={handleNombreBancoChange}
-        onCodigoBancoChange={handleCodigoBancoChange}
-        onActivoChange={handleActivoChange}
+        onFormChange={handleFormChange}
         onUpdate={handleUpdate}
         isFormValid={isFormValid}
       />

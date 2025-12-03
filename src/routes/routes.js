@@ -5,7 +5,6 @@ import Bank from "../components/bank/bank";
 import GirosComerciales from "../components/giroscomerciales/girsocomerciales";
 import BancaSegundoPiso from "../components/banca_segundopiso/banca_segundopiso";
 import Dominios from "../components/dominios/dominios";
-import ControlPermisos from "../components/control_permisos/control_permisos";
 import BancaPrimerPiso from "../components/banca_primerpiso/banca_primerpiso";
 import ErrorService from "../components/errorservice/errorservice";
 import Error404 from "../components/error404/error404";
@@ -54,11 +53,6 @@ const routes = [
     title: "Dominios"
   },
   {
-    path: "/control-permisos",
-    Component: ControlPermisos,
-    title: "Control de Permisos"
-  },
-  {
     path: "/errrorservice",
     Component: ErrorService,
     title: "ErrorServices"
@@ -83,17 +77,6 @@ const routes = [
     Component: MisArchivos,
     title: "Mis Archivos"
   },
-  // {
-  //   path: "/compartidos",
-  //   Component: Compartidos,
-  //   title: "Compartidos"
-  // },
-  // {
-  //   path: "/recientes",
-  //   Component: Recientes,
-  //   title: "Recientes"
-  // }
-
 ];
 
 export default routes;

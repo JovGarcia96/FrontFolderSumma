@@ -38,6 +38,9 @@ import {
   UserPlus,
   ChevronDown,
   CheckCircle,
+  Mail,
+  Phone,
+  Printer,
 } from 'lucide-react';
 
 const MisArchivos = () => {
@@ -58,6 +61,65 @@ const MisArchivos = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Estados para funcionalidades de botones
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [clipboard, setClipboard] = useState([]);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToRename, setItemToRename] = useState(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [moveDestination, setMoveDestination] = useState(null);
+  
+  // Estados para gestión de permisos
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const [sharePermissionsSimple, setSharePermissionsSimple] = useState({
+    ver: true,
+    leer: true,
+    escribir: false
+  });
+  const [sharedUsers, setSharedUsers] = useState([
+    {
+      id: 1,
+      name: 'Juan Pérez',
+      email: 'juan.perez@empresa.com',
+      role: 'Administrador',
+      lastAccess: '2025-09-10 14:30',
+      permissions: { ver: true, modificar: true, eliminar: true, imprimir: false }
+    },
+    {
+      id: 2,
+      name: 'María González',
+      email: 'maria.gonzalez@empresa.com',
+      role: 'Editor',
+      lastAccess: '2025-09-10 12:15',
+      permissions: { ver: true, modificar: false, eliminar: false, imprimir: true }
+    }
+  ]);
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    permissions: { ver: false, modificar: false, eliminar: false, imprimir: false }
+  });
+  
+  // Estado para modal de vista previa
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
+  
+  // Estado para subir archivos
+  const [filesToUpload, setFilesToUpload] = useState([]);
+  const fileInputRef = useRef(null);
+  
+  // Estado para drag and drop
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Estados para navegación de carpetas
+  const [currentFolder, setCurrentFolder] = useState(null);
+  const [folderPath, setFolderPath] = useState([]);
   
   // Estados para el modal de nueva carpeta - OPTIMIZADOS
   const [folderName, setFolderName] = useState('');
@@ -89,6 +151,14 @@ const MisArchivos = () => {
       type: 'folder',
       modified: 'Hace 2 horas',
       owner: 'Juan Pérez',
+      documents: [
+        { id: 101, name: 'Acta Constitutiva', status: 'Faltante', required: true, icon: 'document', color: 'red' },
+        { id: 102, name: 'Poder Representante Legal', status: 'Presente', required: false, icon: 'shield', color: 'green' },
+        { id: 103, name: 'Registro Público Comercio', status: 'Faltante', required: true, icon: 'building', color: 'red' },
+        { id: 104, name: 'Cédula Identificación Fiscal', status: 'Presente', required: false, icon: 'card', color: 'orange' },
+        { id: 105, name: 'Comprobante Domicilio Fiscal', status: 'Presente', required: false, icon: 'location', color: 'green' },
+        { id: 106, name: 'Identificación Oficial', status: 'Presente', required: false, icon: 'shield-check', color: 'blue' },
+      ]
     },
     {
       id: 2,
@@ -105,6 +175,11 @@ const MisArchivos = () => {
       type: 'folder',
       modified: 'Hace 3 días',
       owner: 'Juan Pérez',
+      documents: [
+        { id: 301, name: 'Estado de Cuenta Enero', status: 'Presente', required: true, icon: 'document', color: 'green' },
+        { id: 302, name: 'Estado de Cuenta Febrero', status: 'Presente', required: true, icon: 'document', color: 'green' },
+        { id: 303, name: 'Estado de Cuenta Marzo', status: 'Faltante', required: true, icon: 'document', color: 'red' },
+      ]
     },
     {
       id: 4,
@@ -313,8 +388,119 @@ const MisArchivos = () => {
 
   const handleShare = (file) => {
     setSelectedFile(file);
-    setShowShareDialog(true);
+    setShowPermissionsModal(true); // Abre modal de gestión de permisos
     setOpenDropdown(null);
+  };
+  
+  const handleQuickShare = (file) => {
+    setSelectedFile(file);
+    setShowShareDialog(true); // Abre modal simple de compartir
+    setOpenDropdown(null);
+  };
+
+  // Función para copiar
+  const handleCopy = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para copiar');
+      return;
+    }
+    const itemsToCopy = myFiles.filter(file => selectedItems.includes(file.id));
+    setClipboard(itemsToCopy);
+    alert(`${itemsToCopy.length} elemento(s) copiado(s) al portapapeles`);
+  };
+
+  // Función para pegar
+  const handlePaste = () => {
+    if (clipboard.length === 0) {
+      alert('No hay elementos en el portapapeles');
+      return;
+    }
+    const newFiles = clipboard.map((item, index) => ({
+      ...item,
+      id: Math.max(...myFiles.map(f => f.id)) + index + 1,
+      name: `${item.name} (copia)`,
+      modified: 'Hace unos segundos'
+    }));
+    setMyFiles([...myFiles, ...newFiles]);
+    alert(`${newFiles.length} elemento(s) pegado(s)`);
+    setClipboard([]);
+  };
+
+  // Función para renombrar
+  const handleRename = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona un elemento para renombrar');
+      return;
+    }
+    if (selectedItems.length > 1) {
+      alert('Solo puedes renombrar un elemento a la vez');
+      return;
+    }
+    const item = myFiles.find(f => f.id === selectedItems[0]);
+    setItemToRename(item);
+    setNewItemName(item.name);
+    setShowRenameModal(true);
+  };
+
+  // Función para confirmar renombrar
+  const confirmRename = () => {
+    if (!newItemName.trim()) {
+      alert('El nombre no puede estar vacío');
+      return;
+    }
+    setMyFiles(myFiles.map(file => 
+      file.id === itemToRename.id ? { ...file, name: newItemName } : file
+    ));
+    setShowRenameModal(false);
+    setItemToRename(null);
+    setNewItemName('');
+    setSelectedItems([]);
+    alert('Elemento renombrado correctamente');
+  };
+
+  // Función para mover
+  const handleMove = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para mover');
+      return;
+    }
+    setShowMoveModal(true);
+  };
+
+  // Función para confirmar movimiento
+  const confirmMove = () => {
+    if (!moveDestination) {
+      alert('Selecciona una carpeta de destino');
+      return;
+    }
+    alert(`${selectedItems.length} elemento(s) movido(s) correctamente`);
+    setShowMoveModal(false);
+    setMoveDestination(null);
+    setSelectedItems([]);
+  };
+
+  // Función para eliminar
+  const handleDelete = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para eliminar');
+      return;
+    }
+    setShowDeleteModal(true);
+  };
+
+  // Función para confirmar eliminación
+  const confirmDelete = () => {
+    setMyFiles(myFiles.filter(file => !selectedItems.includes(file.id)));
+    setShowDeleteModal(false);
+    setSelectedItems([]);
+    alert('Elemento(s) eliminado(s) correctamente');
+  };
+
+  // Función para toggle selección
+  const toggleSelection = (id) => {
+    setSelectedItems(prev => 
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
   };
 
   const handleGoBack = () => {
@@ -324,25 +510,119 @@ const MisArchivos = () => {
   const toggleDropdown = (fileId) => {
     setOpenDropdown(openDropdown === fileId ? null : fileId);
   };
+  
+  // Función para manejar la selección de archivos
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    processFiles(files);
+  };
+  
+  // Función para procesar archivos (compartida entre input y drag & drop)
+  const processFiles = (files) => {
+    const newFiles = files.map((file, index) => {
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const fileSize = file.size < 1024 * 1024 
+        ? `${(file.size / 1024).toFixed(1)} KB`
+        : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+      
+      return {
+        id: Date.now() + index,
+        name: file.name,
+        size: fileSize,
+        modified: 'Hace unos segundos',
+        type: 'file',
+        owner: 'Tú',
+        fileObject: file,
+        fileURL: URL.createObjectURL(file)
+      };
+    });
+    
+    setMyFiles([...newFiles, ...myFiles]);
+    setShowUploadDialog(false);
+  };
+  
+  // Funciones para drag and drop
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+  
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  };
+  
+  // Función para manejar click en archivo/carpeta
+  const handleFileClick = (file) => {
+    if (file.type === 'folder') {
+      // Si es carpeta, navegar a la vista de detalles
+      setCurrentFolder(file);
+      setFolderPath([...folderPath, { id: file.id, name: file.name }]);
+    } else {
+      // Si es archivo, abrir modal de vista previa
+      setPreviewFile(file);
+      setShowPreviewModal(true);
+    }
+  };
+  
+  // Función para volver atrás en la navegación
+  const handleGoBackFolder = () => {
+    setCurrentFolder(null);
+    setFolderPath([]);
+  };
+  
+
 
   const handleMenuAction = (action, file) => {
     setOpenDropdown(null);
     
     switch (action) {
+      case 'view':
+        // Usar handleFileClick para manejar carpetas y archivos
+        handleFileClick(file);
+        break;
+      case 'download':
+        // Simular descarga del archivo
+        const link = document.createElement('a');
+        link.href = '#'; // En producción, aquí iría la URL del archivo
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        alert(`Descargando: ${file.name}`);
+        break;
       case 'share':
         handleShare(file);
         break;
-      case 'view':
-        console.log('Ver archivo:', file.name);
-        break;
-      case 'download':
-        console.log('Descargar archivo:', file.name);
-        break;
       case 'rename':
-        console.log('Renombrar archivo:', file.name);
+        // Preparar para renombrar
+        setSelectedItems([file.id]);
+        setItemToRename(file);
+        setNewItemName(file.name);
+        setShowRenameModal(true);
         break;
       case 'delete':
-        console.log('Eliminar archivo:', file.name);
+        // Preparar para eliminar
+        setSelectedItems([file.id]);
+        setShowDeleteModal(true);
         break;
       default:
         break;
@@ -696,6 +976,7 @@ const MisArchivos = () => {
 
           {/* Stats Cards */}
           <div className="p-6">
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card className="p-4 border-l-4 border-l-blue-500">
                 <div className="flex items-center justify-between">
@@ -772,32 +1053,39 @@ const MisArchivos = () => {
                       Nuevo
                     </Button>
                     <div className="h-6 w-px bg-gray-300" />
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handleCopy}>
                       <Scissors className="h-4 w-4 mr-2" />
                       Cortar
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handleCopy}>
                       <Copy className="h-4 w-4 mr-2" />
                       Copiar
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handlePaste}>
                       <Clipboard className="h-4 w-4 mr-2" />
                       Pegar
                     </Button>
                     <div className="h-6 w-px bg-gray-300" />
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handleRename}>
                       <Edit className="h-4 w-4 mr-2" />
                       Renombrar
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      if (selectedItems.length === 0) {
+                        alert('Selecciona al menos un elemento para compartir');
+                        return;
+                      }
+                      const item = myFiles.find(f => f.id === selectedItems[0]);
+                      if (item) handleShare(item);
+                    }}>
                       <Share2 className="h-4 w-4 mr-2" />
                       Compartir
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handleMove}>
                       <Move className="h-4 w-4 mr-2" />
                       Mover
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleDelete}>
                       <Trash2 className="h-4 w-4 mr-2" />
                       Eliminar
                     </Button>
@@ -849,15 +1137,111 @@ const MisArchivos = () => {
                   </div>
                 </Card>
 
-                {/* Files Grid/List */}
-                {viewMode === "grid" ? (
+                {/* Vista de Detalles de Carpeta o Files Grid/List */}
+                {currentFolder ? (
+                  <div className="space-y-4">
+                    {/* Header de la carpeta */}
+                    <Card className="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-l-blue-500">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={handleGoBackFolder}
+                            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                          >
+                            <ChevronLeft className="h-6 w-6 text-blue-600" />
+                          </button>
+                          <div className="p-3 bg-blue-100 rounded-lg">
+                            <FolderOpen className="h-8 w-8 text-blue-600" />
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-bold text-gray-900">Documentos de "{currentFolder.name}"</h2>
+                            <p className="text-sm text-gray-600">Vista completa de documentos y estado de validación</p>
+                          </div>
+                        </div>
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Subida Masiva
+                        </Button>
+                      </div>
+                    </Card>
+
+                    {/* Grid de documentos */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {currentFolder.documents && currentFolder.documents.map((doc) => (
+                        <Card key={doc.id} className="p-6 hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="p-3 bg-gray-100 rounded-lg">
+                              {doc.icon === 'document' && <FileText className={`h-6 w-6 text-${doc.color}-500`} />}
+                              {doc.icon === 'shield' && <FileCheck className={`h-6 w-6 text-${doc.color}-500`} />}
+                              {doc.icon === 'building' && <FileText className={`h-6 w-6 text-${doc.color}-500`} />}
+                              {doc.icon === 'card' && <FileText className={`h-6 w-6 text-${doc.color}-500`} />}
+                              {doc.icon === 'location' && <FileText className={`h-6 w-6 text-${doc.color}-500`} />}
+                              {doc.icon === 'shield-check' && <FileCheck className={`h-6 w-6 text-${doc.color}-500`} />}
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              doc.status === 'Presente' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {doc.status}
+                            </span>
+                          </div>
+                          
+                          <h3 className="font-semibold text-gray-900 mb-2">{doc.name}</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {doc.status === 'Presente' 
+                              ? 'Documento validado y almacenado' 
+                              : 'Documento requerido pendiente'}
+                          </p>
+                          
+                          <div className="space-y-2">
+                            <Button 
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                              disabled={doc.status === 'Faltante'}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Subir
+                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                disabled={doc.status === 'Faltante'}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Ver
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                disabled={doc.status === 'Faltante'}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                ) : viewMode === "grid" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {myFiles.map((file) => (
                       <Card
                         key={file.id}
-                        className="p-4 hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-500"
+                        onClick={() => handleFileClick(file)}
+                        className={`p-4 hover:shadow-lg transition-all cursor-pointer group border-2 ${
+                          selectedItems.includes(file.id) ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-500'
+                        }`}
                       >
                         <div className="flex items-start justify-between mb-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(file.id)}
+                            onChange={() => toggleSelection(file.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
                           <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
                             {file.type === "folder" ? (
                               <Folder className="h-8 w-8 text-blue-500" />
@@ -878,12 +1262,21 @@ const MisArchivos = () => {
                 ) : (
                   <Card>
                     <div className="divide-y">
-                      {myFiles.map((file) => (
-                        <div
+                      {myFiles.map((file) => (                        <Card
                           key={file.id}
-                          className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
+                          onClick={() => handleFileClick(file)}
+                          className={`p-4 hover:shadow-md transition-all cursor-pointer border-l-4 ${
+                            selectedItems.includes(file.id) ? 'border-l-blue-500 bg-blue-50' : 'border-l-blue-500'
+                          }`}
                         >
                           <div className="flex items-center gap-4 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(file.id)}
+                              onChange={() => toggleSelection(file.id)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
                             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
                               {file.type === "folder" ? (
                                 <Folder className="h-6 w-6 text-blue-500" />
@@ -901,7 +1294,7 @@ const MisArchivos = () => {
                             <span className="text-sm text-gray-600 w-32">{file.owner}</span>
                             <DropdownMenu fileId={file.id} file={file} />
                           </div>
-                        </div>
+                        </Card>
                       ))}
                     </div>
                   </Card>
@@ -1070,20 +1463,65 @@ const MisArchivos = () => {
                 <DialogTitle>Subir Archivos</DialogTitle>
               </DialogHeader>
               <div className="px-4 py-4 flex-1 overflow-y-auto">
-                <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer bg-gradient-to-br from-blue-50/50 to-cyan-50/50">
-                  <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-sm font-medium mb-1">Haga clic para cargar o arrastre y suelte</p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  multiple
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.pptx,.txt"
+                />
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                    isDragging 
+                      ? 'border-blue-500 bg-blue-100 scale-105' 
+                      : 'border-gray-300 hover:border-blue-500 bg-gradient-to-br from-blue-50/50 to-cyan-50/50'
+                  }`}
+                >
+                  <Upload className={`h-12 w-12 mx-auto mb-4 transition-colors ${
+                    isDragging ? 'text-blue-600' : 'text-gray-400'
+                  }`} />
+                  <p className="text-sm font-medium mb-1">
+                    {isDragging ? 'Suelta los archivos aquí' : 'Arrastra archivos aquí o haz clic para seleccionar'}
+                  </p>
                   <p className="text-xs text-gray-600">
-                    Soporta: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (Max. 50MB)
+                    Soporta: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, PPTX, TXT (Max. 50MB)
                   </p>
                 </div>
+                
+                {filesToUpload.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Archivos seleccionados ({filesToUpload.length})
+                    </h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {filesToUpload.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <File className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm text-gray-900">{file.name}</span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {file.size < 1024 * 1024 
+                              ? `${(file.size / 1024).toFixed(1)} KB`
+                              : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => setShowUploadDialog(false)}>
-                  Subir Archivos
+                <Button onClick={() => {
+                  setShowUploadDialog(false);
+                }}>
+                  Cerrar
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -1284,42 +1722,71 @@ const MisArchivos = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Share Dialog */}
+          {/* Share Dialog - Modal Simple */}
           <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Compartir Archivo</DialogTitle>
               </DialogHeader>
-              <div className="px-4 py-4 flex-1 overflow-y-auto">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Email del usuario</label>
-                    <Input placeholder="usuario@ejemplo.com" className="mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Permisos</label>
-                    <div className="space-y-2 mt-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Ver</span>
-                        <input type="checkbox" checked={sharePermissions.ver} readOnly />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Leer</span>
-                        <input type="checkbox" checked={sharePermissions.leer} readOnly />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Escribir</span>
-                        <input type="checkbox" checked={sharePermissions.escribir} readOnly />
-                      </div>
+              <div className="space-y-4 py-4">
+                <div>
+                  <label className="text-sm font-medium">Email del usuario</label>
+                  <Input 
+                    placeholder="usuario@ejemplo.com" 
+                    className="mt-1"
+                    value={shareEmail}
+                    onChange={(e) => setShareEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Permisos</label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Ver</span>
+                      <input 
+                        type="checkbox" 
+                        checked={sharePermissionsSimple.ver}
+                        onChange={(e) => setSharePermissionsSimple({...sharePermissionsSimple, ver: e.target.checked})}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Leer</span>
+                      <input 
+                        type="checkbox" 
+                        checked={sharePermissionsSimple.leer}
+                        onChange={(e) => setSharePermissionsSimple({...sharePermissionsSimple, leer: e.target.checked})}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Escribir</span>
+                      <input 
+                        type="checkbox" 
+                        checked={sharePermissionsSimple.escribir}
+                        onChange={(e) => setSharePermissionsSimple({...sharePermissionsSimple, escribir: e.target.checked})}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+                <Button variant="outline" onClick={() => {
+                  setShowShareDialog(false);
+                  setShareEmail('');
+                }}>
                   Cancelar
                 </Button>
-                <Button onClick={() => setShowShareDialog(false)}>
+                <Button onClick={() => {
+                  if (!shareEmail) {
+                    alert('Por favor ingresa un email');
+                    return;
+                  }
+                  alert(`Archivo compartido con ${shareEmail}`);
+                  setShowShareDialog(false);
+                  setShareEmail('');
+                }}>
                   Compartir
                 </Button>
               </DialogFooter>
@@ -1327,6 +1794,719 @@ const MisArchivos = () => {
           </Dialog>
         </main>
         
+        {/* Modal de Renombrar */}
+        {showRenameModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Renombrar Elemento</h3>
+                <button
+                  onClick={() => {
+                    setShowRenameModal(false);
+                    setItemToRename(null);
+                    setNewItemName('');
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nuevo nombre
+                </label>
+                <input
+                  type="text"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ingresa el nuevo nombre"
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowRenameModal(false);
+                    setItemToRename(null);
+                    setNewItemName('');
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmRename}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Renombrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Mover */}
+        {showMoveModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Mover Elementos</h3>
+                <button
+                  onClick={() => {
+                    setShowMoveModal(false);
+                    setMoveDestination(null);
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Selecciona la carpeta de destino
+                </label>
+                <div className="space-y-2">
+                  {myFiles
+                    .filter(f => f.type === 'folder' && !selectedItems.includes(f.id))
+                    .map((folder) => (
+                      <button
+                        key={folder.id}
+                        onClick={() => setMoveDestination(folder.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                          moveDestination === folder.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Folder className="h-5 w-5 text-blue-500" />
+                        <span className="text-sm font-medium text-gray-900">{folder.name}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowMoveModal(false);
+                    setMoveDestination(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmMove}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Mover
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Eliminar */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-red-100 rounded-full">
+                    <Trash2 className="h-6 w-6 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirmar Eliminación</h3>
+                </div>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="mb-6">
+                <p className="text-gray-600">
+                  ¿Estás seguro de que deseas eliminar {selectedItems.length} elemento(s)?
+                </p>
+                <p className="text-sm text-red-600 mt-2">
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Gestión de Permisos */}
+        {showPermissionsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Gestión de Permisos</h3>
+                    <p className="text-sm text-gray-600">{selectedFile?.name || 'Documentos Internos'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPermissionsModal(false)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <Button 
+                  onClick={() => setShowAddUserModal(true)}
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Agregar Nuevo Usuario
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6">
+                <div className="space-y-4">
+                  {sharedUsers.map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                            {user.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <p className="text-xs text-gray-500">{user.role} • Último acceso: {user.lastAccess}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="p-2 hover:bg-gray-100 rounded" title="Enviar email">
+                            <Mail className="h-4 w-4 text-gray-600" />
+                          </button>
+                          <button className="p-2 hover:bg-gray-100 rounded" title="Llamar">
+                            <Phone className="h-4 w-4 text-gray-600" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium">Ver</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={user.permissions.ver}
+                              onChange={(e) => {
+                                const updated = sharedUsers.map(u => 
+                                  u.id === user.id 
+                                    ? {...u, permissions: {...u.permissions, ver: e.target.checked}}
+                                    : u
+                                );
+                                setSharedUsers(updated);
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Edit className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium">Modificar</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={user.permissions.modificar}
+                              onChange={(e) => {
+                                const updated = sharedUsers.map(u => 
+                                  u.id === user.id 
+                                    ? {...u, permissions: {...u.permissions, modificar: e.target.checked}}
+                                    : u
+                                );
+                                setSharedUsers(updated);
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <span className="text-sm font-medium">Eliminar</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={user.permissions.eliminar}
+                              onChange={(e) => {
+                                const updated = sharedUsers.map(u => 
+                                  u.id === user.id 
+                                    ? {...u, permissions: {...u.permissions, eliminar: e.target.checked}}
+                                    : u
+                                );
+                                setSharedUsers(updated);
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Printer className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">Imprimir</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={user.permissions.imprimir}
+                              onChange={(e) => {
+                                const updated = sharedUsers.map(u => 
+                                  u.id === user.id 
+                                    ? {...u, permissions: {...u.permissions, imprimir: e.target.checked}}
+                                    : u
+                                );
+                                setSharedUsers(updated);
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 border-t bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-600">{sharedUsers.length} usuario(s) configurado(s)</p>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowPermissionsModal(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        alert('Cambios guardados exitosamente');
+                        setShowPermissionsModal(false);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Guardar Cambios
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Agregar Nuevo Usuario */}
+        {showAddUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="flex items-center justify-between p-6 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <UserPlus className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Agregar Nuevo Usuario</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAddUserModal(false);
+                    setNewUserData({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      permissions: { ver: false, modificar: false, eliminar: false, imprimir: false }
+                    });
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Nombre Completo *</label>
+                  <Input
+                    placeholder="Ej: Juan Pérez"
+                    value={newUserData.name}
+                    onChange={(e) => setNewUserData({...newUserData, name: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Correo Electrónico *</label>
+                  <Input
+                    type="email"
+                    placeholder="usuario@empresa.com"
+                    value={newUserData.email}
+                    onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Teléfono (Opcional)</label>
+                  <Input
+                    placeholder="+52 55 1234 5678"
+                    value={newUserData.phone}
+                    onChange={(e) => setNewUserData({...newUserData, phone: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-3 block">Permisos</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 border rounded-lg bg-blue-50 border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium">Ver</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newUserData.permissions.ver}
+                            onChange={(e) => setNewUserData({
+                              ...newUserData,
+                              permissions: {...newUserData.permissions, ver: e.target.checked}
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="p-3 border rounded-lg bg-green-50 border-green-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Edit className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium">Modificar</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newUserData.permissions.modificar}
+                            onChange={(e) => setNewUserData({
+                              ...newUserData,
+                              permissions: {...newUserData.permissions, modificar: e.target.checked}
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="p-3 border rounded-lg bg-red-50 border-red-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <span className="text-sm font-medium">Eliminar</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newUserData.permissions.eliminar}
+                            onChange={(e) => setNewUserData({
+                              ...newUserData,
+                              permissions: {...newUserData.permissions, eliminar: e.target.checked}
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="p-3 border rounded-lg bg-purple-50 border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Printer className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">Imprimir</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newUserData.permissions.imprimir}
+                            onChange={(e) => setNewUserData({
+                              ...newUserData,
+                              permissions: {...newUserData.permissions, imprimir: e.target.checked}
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddUserModal(false);
+                    setNewUserData({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      permissions: { ver: false, modificar: false, eliminar: false, imprimir: false }
+                    });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (!newUserData.name || !newUserData.email) {
+                      alert('Por favor completa los campos requeridos');
+                      return;
+                    }
+                    const newUser = {
+                      id: sharedUsers.length + 1,
+                      name: newUserData.name,
+                      email: newUserData.email,
+                      role: 'Usuario',
+                      lastAccess: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                      permissions: newUserData.permissions
+                    };
+                    setSharedUsers([...sharedUsers, newUser]);
+                    setShowAddUserModal(false);
+                    setNewUserData({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      permissions: { ver: false, modificar: false, eliminar: false, imprimir: false }
+                    });
+                    alert('Usuario agregado exitosamente');
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Agregar Usuario
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Vista Previa de Archivo */}
+        {showPreviewModal && previewFile && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    {previewFile.type === 'folder' ? (
+                      <Folder className="h-6 w-6 text-blue-600" />
+                    ) : (
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{previewFile.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      {previewFile.size} • {previewFile.type === 'folder' ? 'Carpeta' : 'Archivo'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    setPreviewFile(null);
+                  }}
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                {previewFile.type === 'folder' ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-900 mb-2">Información de la Carpeta</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nombre:</span>
+                          <span className="font-medium text-gray-900">{previewFile.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tamaño:</span>
+                          <span className="font-medium text-gray-900">{previewFile.size}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Creado:</span>
+                          <span className="font-medium text-gray-900">{previewFile.date}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Propietario:</span>
+                          <span className="font-medium text-gray-900">{previewFile.owner || 'Tú'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        Esta es una carpeta. Para ver su contenido, haz doble clic en ella desde la vista principal.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <h4 className="font-semibold text-gray-900 mb-2">Información del Archivo</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nombre:</span>
+                          <span className="font-medium text-gray-900">{previewFile.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tamaño:</span>
+                          <span className="font-medium text-gray-900">{previewFile.size}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tipo:</span>
+                          <span className="font-medium text-gray-900">
+                            {previewFile.name.split('.').pop().toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Modificado:</span>
+                          <span className="font-medium text-gray-900">{previewFile.date}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Propietario:</span>
+                          <span className="font-medium text-gray-900">{previewFile.owner || 'Tú'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg">
+                      {/* Vista previa de imágenes reales */}
+                      {previewFile.fileURL && (previewFile.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <img 
+                            src={previewFile.fileURL} 
+                            alt={previewFile.name}
+                            className="max-w-full max-h-96 object-contain rounded-lg shadow-md"
+                          />
+                          <p className="text-sm text-gray-600 mt-2">Vista previa de imagen</p>
+                        </div>
+                      ) : previewFile.fileURL && previewFile.name.match(/\.pdf$/i) ? (
+                        <div className="w-full h-full">
+                          <iframe
+                            src={previewFile.fileURL}
+                            className="w-full h-96 rounded-lg border border-gray-300"
+                            title={`Vista previa de ${previewFile.name}`}
+                          />
+                          <p className="text-sm text-gray-600 mt-2 text-center">Vista previa del documento PDF</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3 p-8 text-center">
+                          {previewFile.name.endsWith('.pdf') && (
+                            <FileText className="h-16 w-16 text-red-500" />
+                          )}
+                          {previewFile.name.match(/\.(png|jpg|jpeg)$/i) && (
+                            <ImageIcon className="h-16 w-16 text-green-500" />
+                          )}
+                          {previewFile.name.endsWith('.pptx') && (
+                            <FileText className="h-16 w-16 text-orange-500" />
+                          )}
+                          {previewFile.name.match(/\.(doc|docx)$/i) && (
+                            <FileText className="h-16 w-16 text-blue-500" />
+                          )}
+                          {previewFile.name.match(/\.(xls|xlsx)$/i) && (
+                            <FileText className="h-16 w-16 text-green-600" />
+                          )}
+                          {!previewFile.name.match(/\.(pdf|png|jpg|jpeg|pptx|doc|docx|xls|xlsx)$/i) && (
+                            <File className="h-16 w-16 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="text-gray-900 font-medium">Vista previa del archivo</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {previewFile.fileURL 
+                                ? 'Este tipo de archivo no admite vista previa'
+                                : 'Vista previa no disponible para archivos de ejemplo'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t bg-gray-50 flex justify-between">
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleMenuAction('download', previewFile)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Descargar
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowPreviewModal(false);
+                      handleShare(previewFile);
+                    }}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Compartir
+                  </Button>
+                </div>
+                <Button 
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    setPreviewFile(null);
+                  }}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Footer simplificado */}
         <footer className="bg-white border-t border-gray-200 p-4">
           <div className="text-center text-sm text-gray-600">

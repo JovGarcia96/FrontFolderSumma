@@ -1,4 +1,6 @@
-import React, { useState, useMemo,useRef} from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
 import Header from '../head/head';
 import Sidebar from '../layout/sidebar';
 import { 
@@ -143,6 +145,16 @@ const TramitesNotariales = () => {
   const fileInputRefs = useRef({});
   const massUploadInputRef = useRef(null);
   const uploadFileInputRef = useRef(null);
+  const standaloneFileInputRef = useRef(null);
+  
+  // Estado para archivos sueltos (fuera de carpetas)
+  const [standaloneFiles, setStandaloneFiles] = useState([]);
+  
+  // Estado para modal de vista previa de archivos sueltos
+  const [showStandalonePreviewModal, setShowStandalonePreviewModal] = useState(false);
+  const [selectedStandaloneFile, setSelectedStandaloneFile] = useState(null);
+  const [documentContent, setDocumentContent] = useState(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   // Datos de usuarios para gestión de permisos
   const [users] = useState([
@@ -615,6 +627,171 @@ const TramitesNotariales = () => {
       alert(`${files.length} archivo(s) subido(s) correctamente`);
       event.target.value = ''; // Reset input
     }
+  };
+  
+  // Funciones para archivos sueltos
+  const handleStandaloneFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    processStandaloneFiles(files);
+  };
+  
+  // Función para formatear tamaño de archivo
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+  
+  const processStandaloneFiles = (files) => {
+    const newFiles = files.map((file, index) => {
+      return {
+        id: `standalone-${Date.now()}-${index}`,
+        name: file.name,
+        size: formatFileSize(file.size),
+        type: file.type,
+        modified: new Date().toLocaleString('es-ES'),
+        fileURL: URL.createObjectURL(file),
+        file: file // Guardar el objeto File original para poder leerlo
+      };
+    });
+    
+    setStandaloneFiles([...standaloneFiles, ...newFiles]);
+    logActivity(
+      'Archivos subidos',
+      `Se subieron ${newFiles.length} archivo(s) suelto(s)`
+    );
+  };
+  
+  const handleViewStandaloneFile = async (file) => {
+    setSelectedStandaloneFile(file);
+    setShowStandalonePreviewModal(true);
+    setDocumentContent(null);
+    setIsLoadingContent(true);
+    
+    const fileInfo = getFileType(file);
+    
+    try {
+      // Cargar contenido de Word
+      if (fileInfo.type === 'word' && file.file) {
+        const arrayBuffer = await file.file.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        setDocumentContent({ type: 'word', html: result.value });
+      }
+      // Cargar contenido de Excel
+      else if (fileInfo.type === 'excel' && file.file) {
+        const arrayBuffer = await file.file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const htmlTable = XLSX.utils.sheet_to_html(worksheet);
+        setDocumentContent({ type: 'excel', html: htmlTable, sheetNames: workbook.SheetNames });
+      }
+    } catch (error) {
+      console.error('Error al cargar contenido del documento:', error);
+      setDocumentContent({ type: 'error', message: 'No se pudo cargar el contenido del documento' });
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+  
+  const handleDeleteStandaloneFile = (fileId) => {
+    setStandaloneFiles(standaloneFiles.filter(f => f.id !== fileId));
+    logActivity('Archivo eliminado', 'Se eliminó un archivo suelto');
+  };
+  
+  // Función para detectar tipo de archivo
+  const getFileType = (file) => {
+    const fileName = file.name.toLowerCase();
+    const mimeType = file.type.toLowerCase();
+    
+    // Excel
+    if (fileName.match(/\.(xlsx|xls)$/) || mimeType.includes('spreadsheet')) {
+      return {
+        type: 'excel',
+        icon: 'excel',
+        color: 'green',
+        displayName: 'Excel',
+        fullName: 'Hoja de cálculo',
+        canView: false,
+        canEdit: false
+      };
+    }
+    
+    // Word
+    if (fileName.match(/\.(docx|doc)$/) || mimeType.includes('document')) {
+      return {
+        type: 'word',
+        icon: 'word',
+        color: 'blue',
+        displayName: 'Word',
+        fullName: 'Documento de texto',
+        canView: false,
+        canEdit: false
+      };
+    }
+    
+    // PowerPoint
+    if (fileName.match(/\.(pptx|ppt)$/) || mimeType.includes('presentation')) {
+      return {
+        type: 'powerpoint',
+        icon: 'powerpoint',
+        color: 'orange',
+        displayName: 'PowerPoint',
+        fullName: 'Presentación',
+        canView: false,
+        canEdit: false
+      };
+    }
+    
+    // PDF
+    if (fileName.match(/\.pdf$/) || mimeType.includes('pdf')) {
+      return {
+        type: 'pdf',
+        icon: 'pdf',
+        color: 'red',
+        displayName: 'PDF',
+        fullName: 'Documento PDF',
+        canView: true,
+        canEdit: false
+      };
+    }
+    
+    // Imágenes
+    if (fileName.match(/\.(png|jpg|jpeg|gif|webp|svg)$/) || mimeType.includes('image')) {
+      return {
+        type: 'image',
+        icon: 'image',
+        color: 'purple',
+        displayName: 'Imagen',
+        fullName: 'Archivo de imagen',
+        canView: true,
+        canEdit: false
+      };
+    }
+    
+    // Texto
+    if (fileName.match(/\.(txt|md|csv)$/) || mimeType.includes('text')) {
+      return {
+        type: 'text',
+        icon: 'text',
+        color: 'gray',
+        displayName: 'Texto',
+        fullName: 'Archivo de texto',
+        canView: true,
+        canEdit: false
+      };
+    }
+    
+    // Otros
+    return {
+      type: 'other',
+      icon: 'file',
+      color: 'gray',
+      displayName: 'Archivo',
+      fullName: 'Archivo genérico',
+      canView: false,
+      canEdit: false
+    };
   };
 
   // Función para ordenar carpetas
@@ -1827,12 +2004,6 @@ const TramitesNotariales = () => {
               <Files className="h-4 w-4" />
               Subida Masiva
             </button>
-            <button className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-              Cerrar Vista
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              Generar Reporte
-            </button>
           </div>
         </div>
 
@@ -2221,6 +2392,230 @@ const TramitesNotariales = () => {
     );
   };
   
+  // Modal de vista previa para archivos sueltos
+  const StandaloneFilePreviewModal = () => {
+    if (!showStandalonePreviewModal || !selectedStandaloneFile) return null;
+    
+    const fileInfo = getFileType(selectedStandaloneFile);
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${
+                fileInfo.color === 'green' ? 'bg-green-100' :
+                fileInfo.color === 'blue' ? 'bg-blue-100' :
+                fileInfo.color === 'orange' ? 'bg-orange-100' :
+                fileInfo.color === 'red' ? 'bg-red-100' :
+                fileInfo.color === 'purple' ? 'bg-purple-100' :
+                'bg-gray-100'
+              }`}>
+                <FileText className={`h-6 w-6 ${
+                  fileInfo.color === 'green' ? 'text-green-600' :
+                  fileInfo.color === 'blue' ? 'text-blue-600' :
+                  fileInfo.color === 'orange' ? 'text-orange-600' :
+                  fileInfo.color === 'red' ? 'text-red-600' :
+                  fileInfo.color === 'purple' ? 'text-purple-600' :
+                  'text-gray-600'
+                }`} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{selectedStandaloneFile.name}</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedStandaloneFile.size} • {fileInfo.fullName}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowStandalonePreviewModal(false);
+                setSelectedStandaloneFile(null);
+              }}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Información del Archivo */}
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+              <h4 className="font-semibold text-gray-900 mb-2">Información del Archivo</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Nombre:</span>
+                  <span className="font-medium text-gray-900">{selectedStandaloneFile.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tamaño:</span>
+                  <span className="font-medium text-gray-900">{selectedStandaloneFile.size}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tipo:</span>
+                  <span className="font-medium text-gray-900">
+                    {fileInfo.fullName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Modificado:</span>
+                  <span className="font-medium text-gray-900">{selectedStandaloneFile.modified}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Propietario:</span>
+                  <span className="font-medium text-gray-900">{selectedStandaloneFile.owner || 'Tú'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Vista previa del archivo */}
+            <div className="p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg">
+              {fileInfo.type === 'image' && selectedStandaloneFile.fileURL ? (
+                // Vista previa de imágenes
+                <div className="flex flex-col items-center gap-3">
+                  <img 
+                    src={selectedStandaloneFile.fileURL} 
+                    alt={selectedStandaloneFile.name}
+                    className="max-w-full max-h-96 object-contain rounded-lg shadow-md"
+                  />
+                  <p className="text-sm text-gray-600 mt-2">Vista previa de imagen</p>
+                </div>
+              ) : fileInfo.type === 'pdf' && selectedStandaloneFile.fileURL ? (
+                // Vista previa de PDF
+                <div className="w-full">
+                  <iframe
+                    src={selectedStandaloneFile.fileURL}
+                    className="w-full h-96 rounded-lg border border-gray-300"
+                    title={`Vista previa de ${selectedStandaloneFile.name}`}
+                  />
+                  <p className="text-sm text-gray-600 mt-2 text-center">Vista previa del documento PDF</p>
+                </div>
+              ) : (fileInfo.type === 'excel' || fileInfo.type === 'word' || fileInfo.type === 'powerpoint') ? (
+                // Vista de contenido real para archivos de Office
+                <div className="w-full">
+                  {isLoadingContent ? (
+                    <div className="flex flex-col items-center justify-center p-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                      <p className="text-gray-600">Cargando contenido del documento...</p>
+                    </div>
+                  ) : documentContent && documentContent.type === 'word' ? (
+                    <div className="w-full">
+                      <div className="bg-white rounded-lg border border-gray-300 p-6 max-h-96 overflow-y-auto">
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: documentContent.html }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2 text-center">Vista previa del documento Word</p>
+                    </div>
+                  ) : documentContent && documentContent.type === 'excel' ? (
+                    <div className="w-full">
+                      <div className="bg-white rounded-lg border border-gray-300 p-4 max-h-96 overflow-auto">
+                        <div 
+                          className="excel-table"
+                          dangerouslySetInnerHTML={{ __html: documentContent.html }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2 text-center">
+                        Vista previa de Excel - Hoja: {documentContent.sheetNames ? documentContent.sheetNames[0] : 'Principal'}
+                      </p>
+                    </div>
+                  ) : documentContent && documentContent.type === 'error' ? (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+                      <p className="text-red-700">{documentContent.message}</p>
+                      <p className="text-sm text-red-600 mt-2">Haz clic en "Descargar" para abrir el archivo</p>
+                    </div>
+                  ) : (
+                    <div className={`bg-gradient-to-br rounded-lg p-8 text-center ${
+                      fileInfo.type === 'excel' ? 'from-green-50 to-emerald-50' :
+                      fileInfo.type === 'word' ? 'from-blue-50 to-indigo-50' :
+                      'from-orange-50 to-red-50'
+                    }`}>
+                      <div className="mb-4">
+                        <div className={`inline-block p-4 rounded-full ${
+                          fileInfo.type === 'excel' ? 'bg-green-100' :
+                          fileInfo.type === 'word' ? 'bg-blue-100' :
+                          'bg-orange-100'
+                        }`}>
+                          <FileText className={`h-16 w-16 ${
+                            fileInfo.type === 'excel' ? 'text-green-600' :
+                            fileInfo.type === 'word' ? 'text-blue-600' :
+                            'text-orange-600'
+                          }`} />
+                        </div>
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        Documento {fileInfo.displayName}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {selectedStandaloneFile.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        No se pudo cargar la vista previa del documento
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Sin vista previa disponible
+                <div className="flex flex-col items-center gap-3 p-8 text-center">
+                  <FileText className="h-16 w-16 text-gray-400" />
+                  <div>
+                    <p className="text-gray-900 font-medium">Vista previa del archivo</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Este tipo de archivo no admite vista previa en el navegador
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Puedes descargarlo para verlo en tu equipo
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t bg-gray-50 flex justify-between">
+            <div className="flex gap-2">
+              <button 
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = selectedStandaloneFile.fileURL;
+                  link.download = selectedStandaloneFile.name;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Descargar
+              </button>
+              <button 
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+                Compartir
+              </button>
+            </div>
+            <button
+              onClick={() => {
+                setShowStandalonePreviewModal(false);
+                setSelectedStandaloneFile(null);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
   // Modal de Renombrar
   const renderRenameModal = () => {
     if (!showRenameModal || !itemToRename) return null;
@@ -2344,36 +2739,98 @@ const TramitesNotariales = () => {
           </div>
         ))}
 
-        {/* Archivos de ejemplo (puedes agregar más según necesites) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative">
-          {/* Checkbox de selección */}
-          <div className="absolute top-3 left-3 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes('file-1')}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleSelectItem('file-1');
-              }}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-          </div>
-          
+        {/* Archivos sueltos (fuera de carpetas) */}
+        {standaloneFiles.map((file) => (
           <div 
-            onClick={() => toggleSelectItem('file-1')}
-            className="flex flex-col items-center text-center cursor-pointer"
+            key={file.id}
+            className={`bg-white border rounded-lg p-4 hover:shadow-lg transition-all group relative ${
+              selectedItems.includes(file.id) 
+                ? 'border-blue-500 ring-2 ring-blue-200' 
+                : 'border-gray-200 hover:border-blue-300'
+            }`}
           >
-            <div className="mb-3">
-              <FileText className="h-12 w-12 text-red-500 group-hover:text-red-600 transition-colors" />
+            {/* Checkbox de selección */}
+            <div className="absolute top-3 left-3 z-10">
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(file.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleSelectItem(file.id);
+                }}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+              />
             </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
-              Reporte Financiero Q1.pdf
-            </h3>
-            <p className="text-xs text-gray-500 mb-1">2.4 MB</p>
-            <p className="text-xs text-gray-400">Hace 1 día</p>
+            
+            {/* Botón de menú */}
+            <div className="absolute top-3 right-3 z-10">
+              <div className="relative group/menu">
+                <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+                  <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                </button>
+                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewStandaloneFile(file);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Ver
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const link = document.createElement('a');
+                      link.href = file.fileURL;
+                      link.download = file.name;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Descargar
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteStandaloneFile(file.id);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              onClick={() => handleViewStandaloneFile(file)}
+              className="flex flex-col items-center text-center cursor-pointer"
+            >
+              <div className="mb-3 mt-4">
+                {file.type.includes('pdf') ? (
+                  <FileText className="h-12 w-12 text-red-500 group-hover:text-red-600 transition-colors" />
+                ) : file.type.includes('image') ? (
+                  <FileText className="h-12 w-12 text-green-500 group-hover:text-green-600 transition-colors" />
+                ) : (
+                  <FileText className="h-12 w-12 text-gray-500 group-hover:text-gray-600 transition-colors" />
+                )}
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
+                {file.name}
+              </h3>
+              <p className="text-xs text-gray-500 mb-1">{file.size}</p>
+              <p className="text-xs text-gray-400">{file.modified}</p>
+            </div>
           </div>
-        </div>
+        ))}
 
+        {/* Archivo de ejemplo (puedes eliminarlo) */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative">
           {/* Checkbox de selección */}
           <div className="absolute top-3 left-3 z-10">
@@ -2634,13 +3091,22 @@ const TramitesNotariales = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <button 
-                    onClick={handleUploadFile}
+                    onClick={() => standaloneFileInputRef.current?.click()}
                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
                   >
                     <Upload className="h-4 w-4" />
                     Subir Archivo
                   </button>
-                  {/* Input oculto para subir archivos */}
+                  {/* Input oculto para subir archivos sueltos */}
+                  <input
+                    ref={standaloneFileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleStandaloneFileSelect}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.pptx,.txt"
+                  />
+                  {/* Input oculto para subir archivos (original) */}
                   <input
                     ref={uploadFileInputRef}
                     type="file"
@@ -2934,6 +3400,7 @@ const TramitesNotariales = () => {
       <PermissionsModal />
       <CreateFolderModal />
       <AddUserModal />
+      <StandaloneFilePreviewModal />
       {renderMoveModal()}
       {renderDeleteModal()}
       {renderRenameModal()}
