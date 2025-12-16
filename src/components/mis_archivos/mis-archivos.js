@@ -201,7 +201,39 @@ const MisArchivos = () => {
     },
   ]);
 
-  // Mock data - Usuarios disponibles (lista más amplia)
+
+  // Funciones para calcular estadísticas dinámicas
+  const calculateTotalFiles = () => {
+    return myFiles.length;
+  };
+
+  const calculateFolders = () => {
+    return myFiles.filter(file => file.type === 'folder').length;
+  };
+
+  const calculateSharedCount = () => {
+    return sharedFiles.length;
+  };
+
+  const calculateStorageUsed = () => {
+    let totalSize = 0;
+    myFiles.forEach(file => {
+      if (file.size) {
+        const sizeStr = file.size.toLowerCase();
+        const value = parseFloat(sizeStr);
+        if (sizeStr.includes('gb')) {
+          totalSize += value;
+        } else if (sizeStr.includes('mb')) {
+          totalSize += value / 1024;
+        } else if (sizeStr.includes('kb')) {
+          totalSize += value / (1024 * 1024);
+        }
+      }
+    });
+    return totalSize.toFixed(1);
+  };
+
+    // Mock data - Usuarios disponibles (lista más amplia)
   const availableUsers = [
     { id: 1, name: 'María González', email: 'maria.gonzalez@findrive.com', avatar: 'MG', role: 'Gerente' },
     { id: 2, name: 'Carlos Rodríguez', email: 'carlos.rodriguez@findrive.com', avatar: 'CR', role: 'Analista' },
@@ -1006,7 +1038,7 @@ const MisArchivos = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Compartidos</p>
-                    <p className="text-2xl font-bold text-purple-600">18</p>
+                    <p className="text-2xl font-bold text-purple-600">{calculateSharedCount()}</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
                     <Users className="h-6 w-6 text-purple-600" />
@@ -1017,7 +1049,7 @@ const MisArchivos = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Almacenamiento</p>
-                    <p className="text-2xl font-bold text-orange-600">45.2 GB</p>
+                    <p className="text-2xl font-bold text-orange-600">{calculateStorageUsed()} GB</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-orange-600" />
@@ -2507,10 +2539,15 @@ const MisArchivos = () => {
           </div>
         )}
 
-        {/* Footer simplificado */}
-        <footer className="bg-white border-t border-gray-200 p-4">
-          <div className="text-center text-sm text-gray-600">
-            © 2025 FinDrive. Todos los derechos reservados.
+        {/* Footer con distribución correcta */}
+        <footer className="bg-white border-t border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              © 2025 FinDrive. Todos los derechos reservados.
+            </div>
+            <div className="text-sm text-gray-600">
+              Sistema de gestión documental financiera
+            </div>
           </div>
         </footer>
       </div>

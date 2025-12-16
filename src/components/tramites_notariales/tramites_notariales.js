@@ -116,7 +116,55 @@ const TramitesNotariales = () => {
     setActivityLog(prev => [newActivity, ...prev]);
   };
 
-  // Estado para vista (iconos o lista)
+
+  // Funciones para calcular estadísticas dinámicas
+  const calculateTotalFiles = () => {
+    let total = 0;
+    folders.forEach(folder => {
+      if (folder.documents) {
+        total += folder.documents.length;
+      }
+    });
+    return total;
+  };
+
+  const calculateFolders = () => {
+    return folders.length;
+  };
+
+  const calculateSharedFolders = () => {
+    // Contar carpetas que tienen usuarios con permisos
+    let sharedCount = 0;
+    folders.forEach(folder => {
+      if (folderPermissions[folder.id]) {
+        const userCount = Object.keys(folderPermissions[folder.id]).length;
+        if (userCount > 0) {
+          sharedCount++;
+        }
+      }
+    });
+    return sharedCount;
+  };
+
+  const calculateStorageUsed = () => {
+    let totalSize = 0;
+    folders.forEach(folder => {
+      if (folder.size) {
+        const sizeStr = folder.size.toLowerCase().trim();
+        const value = parseFloat(sizeStr);
+        if (sizeStr.includes('gb')) {
+          totalSize += value;
+        } else if (sizeStr.includes('mb')) {
+          totalSize += value / 1024;
+        } else if (sizeStr.includes('kb')) {
+          totalSize += value / (1024 * 1024);
+        }
+      }
+    });
+    return totalSize.toFixed(1);
+  };
+
+    // Estado para vista (iconos o lista)
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   
   // Estado para ordenamiento
@@ -139,6 +187,10 @@ const TramitesNotariales = () => {
   const [moveDestination, setMoveDestination] = useState(null);
   
   // Estado para modal de Eliminar
+  
+  // Estado para modal de progreso de documentos
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [selectedFolderForProgress, setSelectedFolderForProgress] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Referencias para inputs de archivo
@@ -406,13 +458,133 @@ const TramitesNotariales = () => {
     setShowPermissionsModal(false);
     setSelectedFolderForPermissions(null);
   };
+
+  // Función para abrir modal de progreso
+  const openProgressModal = (folder) => {
+    setSelectedFolderForProgress(folder);
+    setShowProgressModal(true);
+  };
+
+  // Función para cerrar modal de progreso
+  const closeProgressModal = () => {
+    setShowProgressModal(false);
+    setSelectedFolderForProgress(null);
+  };
+
+  // Función para calcular el porcentaje de progreso
+  const calculateProgress = (folder) => {
+    if (!folder.documents || folder.documents.length === 0) return 0;
+    const completed = folder.documents.filter(doc => doc.status === 'present').length;
+    return Math.round((completed / folder.documents.length) * 100);
+  };
+
   
-  // Función para crear nueva carpeta
+
+  // Estructura de documentos por defecto para nuevas carpetas
+  const getDefaultDocuments = () => {
+    return [
+      { 
+        id: 1,
+        name: "Acta Constitutiva", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: FileText,
+        color: "red",
+        fileUrl: null,
+        keywords: ["acta", "constitutiva", "constitucion"]
+      },
+      { 
+        id: 2,
+        name: "Poder Representante Legal", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Shield,
+        color: "red",
+        fileUrl: null,
+        keywords: ["poder", "representante", "legal"]
+      },
+      { 
+        id: 3,
+        name: "Registro Público Comercio", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Building,
+        color: "red",
+        fileUrl: null,
+        keywords: ["registro", "publico", "comercio", "rpc"]
+      },
+      { 
+        id: 4,
+        name: "Cédula Identificación Fiscal", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: CreditCard,
+        color: "red",
+        fileUrl: null,
+        keywords: ["cedula", "identificacion", "fiscal", "rfc"]
+      },
+      { 
+        id: 5,
+        name: "Comprobante Domicilio Fiscal", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: MapPin,
+        color: "red",
+        fileUrl: null,
+        keywords: ["comprobante", "domicilio", "fiscal", "direccion"]
+      },
+      { 
+        id: 6,
+        name: "Identificación Oficial", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Shield,
+        color: "red",
+        fileUrl: null,
+        keywords: ["identificacion", "oficial", "ine", "pasaporte"]
+      },
+      { 
+        id: 7,
+        name: "Forma Migratoria", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Plane,
+        color: "red",
+        fileUrl: null,
+        keywords: ["forma", "migratoria", "fm", "inmigracion"]
+      },
+      { 
+        id: 8,
+        name: "E-firma Razón Social", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Shield,
+        color: "red",
+        fileUrl: null,
+        keywords: ["efirma", "firma", "razon", "social", "electronica"]
+      },
+      { 
+        id: 9,
+        name: "E-firma Representante", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: Users,
+        color: "red",
+        fileUrl: null,
+        keywords: ["efirma", "firma", "representante", "electronica"]
+      }
+    ];
+  };
+
+    // Función para crear nueva carpeta
   const handleCreateFolder = () => {
     if (!newFolderData.name.trim()) {
       alert('Por favor ingrese un nombre para la carpeta');
       return;
     }
+    
+    // Obtener los 9 documentos por defecto
+    const defaultDocuments = getDefaultDocuments();
     
     const newFolder = {
       id: folders.length + 1,
@@ -420,9 +592,9 @@ const TramitesNotariales = () => {
       size: '0 MB',
       color: 'blue',
       icon: FolderOpen,
-      documents: [],
+      documents: defaultDocuments,
       completedCount: 0,
-      totalCount: 0
+      totalCount: 9
     };
     
     setFolders([...folders, newFolder]);
@@ -432,7 +604,7 @@ const TramitesNotariales = () => {
     // Registrar actividad
     logActivity(
       'Nueva carpeta creada',
-      `Se creó la carpeta "${newFolderData.name}"`
+      `Se creó la carpeta "${newFolderData.name}" con 9 documentos requeridos`
     );
   };
   
@@ -1508,6 +1680,154 @@ const TramitesNotariales = () => {
     );
   };
 
+  // Modal de progreso de documentos
+  const ProgressModal = () => {
+    if (!showProgressModal || !selectedFolderForProgress) return null;
+
+    const folder = selectedFolderForProgress;
+    const progress = calculateProgress(folder);
+    const completedDocs = folder.documents?.filter(doc => doc.status === 'present').length || 0;
+    const totalDocs = folder.documents?.length || 0;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Progreso de Documentos
+                </h3>
+                <p className="text-sm text-gray-500">{folder.name}</p>
+              </div>
+            </div>
+            <button 
+              onClick={closeProgressModal}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          <div className="p-6 space-y-6">
+            {/* Resumen General */}
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Progreso General</p>
+                  <p className="text-3xl font-bold text-blue-600">{progress}%</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900">{completedDocs}/{totalDocs}</p>
+                  <p className="text-sm text-gray-600">Documentos Completos</p>
+                </div>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 rounded-full ${
+                    progress === 100
+                      ? 'bg-green-500'
+                      : progress >= 75
+                      ? 'bg-yellow-500'
+                      : progress >= 50
+                      ? 'bg-orange-500'
+                      : 'bg-red-500'
+                  }`}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Lista de Documentos */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                Detalle de Documentos
+              </h4>
+              <div className="space-y-2">
+                {folder.documents && folder.documents.length > 0 ? (
+                  folder.documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        doc.status === 'present'
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-red-50 border-red-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        {doc.status === 'present' ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {doc.name}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {doc.description}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${
+                          doc.status === 'present'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {doc.status === 'present' ? 'Completo' : 'Pendiente'}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No hay documentos en esta carpeta</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Estadísticas */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-gray-900">{completedDocs}</p>
+                <p className="text-xs text-gray-600 mt-1">Completos</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <AlertCircle className="h-6 w-6 text-red-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-gray-900">{totalDocs - completedDocs}</p>
+                <p className="text-xs text-gray-600 mt-1">Pendientes</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-gray-900">{totalDocs}</p>
+                <p className="text-xs text-gray-600 mt-1">Total</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 sticky bottom-0 bg-white">
+            <button
+              onClick={closeProgressModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Modal de crear carpeta
   const CreateFolderModal = () => {
     if (!showCreateFolderModal) return null;
@@ -1541,7 +1861,14 @@ const TramitesNotariales = () => {
                 type="text"
                 value={newFolderData.name}
                 onChange={(e) => setNewFolderData({ ...newFolderData, name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateFolder();
+                  }
+                }}
                 placeholder="Ej: Documentos Legales"
+                autoFocus
+                spellCheck="false"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -2711,17 +3038,33 @@ const TramitesNotariales = () => {
               />
             </div>
             
-            {/* Botón de compartir */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openPermissionsModal(folder);
-              }}
-              className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors z-10"
-            >
-              <UserCheck className="h-3 w-3" />
-              Compartir
-            </button>
+            {/* Botones de progreso y compartir */}
+            <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+              {/* Botón de Progreso */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openProgressModal(folder);
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                title="Ver progreso de documentos"
+              >
+                <TrendingUp className="h-3 w-3" />
+                Progreso
+              </button>
+              
+              {/* Botón de Compartir */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openPermissionsModal(folder);
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              >
+                <UserCheck className="h-3 w-3" />
+                Compartir
+              </button>
+            </div>
             
             {/* Contenido de la carpeta - clickeable */}
             <div 
@@ -3132,7 +3475,7 @@ const TramitesNotariales = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Total Archivos</p>
-                      <p className="text-2xl font-bold text-blue-600">5</p>
+                      <p className="text-2xl font-bold text-blue-600">{calculateTotalFiles()}</p>
                     </div>
                     <div className="p-2.5 bg-blue-50 rounded-lg">
                       <FileText className="h-6 w-6 text-blue-600" />
@@ -3158,7 +3501,7 @@ const TramitesNotariales = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Compartidos</p>
-                      <p className="text-2xl font-bold text-purple-600">18</p>
+                      <p className="text-2xl font-bold text-purple-600">{calculateSharedFolders()}</p>
                     </div>
                     <div className="p-2.5 bg-purple-50 rounded-lg">
                       <Users className="h-6 w-6 text-purple-600" />
@@ -3171,7 +3514,7 @@ const TramitesNotariales = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Almacenamiento</p>
-                      <p className="text-2xl font-bold text-orange-600">45.2 GB</p>
+                      <p className="text-2xl font-bold text-orange-600">{calculateStorageUsed()} GB</p>
                     </div>
                     <div className="p-2.5 bg-orange-50 rounded-lg">
                       <TrendingUp className="h-6 w-6 text-orange-600" />
@@ -3399,6 +3742,7 @@ const TramitesNotariales = () => {
       <MassUploadModal />
       <PermissionsModal />
       <CreateFolderModal />
+      <ProgressModal />
       <AddUserModal />
       <StandaloneFilePreviewModal />
       {renderMoveModal()}

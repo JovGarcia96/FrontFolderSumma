@@ -507,9 +507,14 @@ const Notificaciones = () => {
         </main>
         
         {/* Footer simplificado */}
-        <footer className="bg-white border-t border-gray-200 p-4">
-          <div className="text-center text-sm text-gray-600">
-            © 2025 FinDrive. Todos los derechos reservados.
+         <footer className="bg-white border-t border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              © 2025 FinDrive. Todos los derechos reservados.
+            </div>
+            <div className="text-sm text-gray-600">
+              Sistema de gestión documental financiera
+            </div>
           </div>
         </footer>
       </div>

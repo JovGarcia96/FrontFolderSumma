@@ -570,6 +570,114 @@ const Bank = () => {
   const [selectedBancoInfo, setSelectedBancoInfo] = useState(null);
   const [editingBanco, setEditingBanco] = useState(null);
   const [deletingBanco, setDeletingBanco] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Funciones para paginación
+  const totalPages = Math.ceil(bancos.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBancos = bancos.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    const pageNum = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(pageNum);
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxButtons = 7;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage < maxButtons - 1) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    // Botón Previous
+    buttons.push(
+      <button
+        key="prev"
+        onClick={() => goToPage(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Previous
+      </button>
+    );
+
+    // Primera página
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key={1}
+          onClick={() => goToPage(1)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(
+          <span key="dots1" className="px-2 py-2 text-gray-500">
+            ...
+          </span>
+        );
+      }
+    }
+
+    // Páginas intermedias
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => goToPage(i)}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            currentPage === i
+              ? "bg-blue-600 text-white border border-blue-600"
+              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Última página
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(
+          <span key="dots2" className="px-2 py-2 text-gray-500">
+            ...
+          </span>
+        );
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          onClick={() => goToPage(totalPages)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    // Botón Next
+    buttons.push(
+      <button
+        key="next"
+        onClick={() => goToPage(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Next
+      </button>
+    );
+
+    return buttons;
+  };
+
   const [formData, setFormData] = useState({
     nombreBanco: "",
     codigoBanco: "",
@@ -896,7 +1004,7 @@ const Bank = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {bancos.map((banco, index) => (
+                    {currentBancos.map((banco, index) => (
                       <tr key={banco.id} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                         <td className="py-3 px-4">
                           <span className="text-sm text-gray-600 font-mono">
@@ -995,6 +1103,23 @@ const Bank = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Paginador */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6 pb-6">
+                  {renderPaginationButtons()}
+                </div>
+              )}
+
+              {/* Información de paginación */}
+              <div className="flex items-center justify-between px-4 pb-4 text-sm text-gray-600">
+                <span>
+                  Mostrando {startIndex + 1} a {Math.min(endIndex, bancos.length)} de {bancos.length} registros
+                </span>
+                <span>
+                  Página {currentPage} de {totalPages}
+                </span>
               </div>
             </CardContent>
           </Card>
