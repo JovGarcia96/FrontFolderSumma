@@ -70,6 +70,8 @@ const TramitesNotariales = () => {
   const [draggedFiles, setDraggedFiles] = useState([]);
   // Estado para archivos subidos
   const [uploadedFiles, setUploadedFiles] = useState({});
+  // Estado para campos de texto (correo y teléfono)
+  const [textFieldValues, setTextFieldValues] = useState({});
   // Estado para subida masiva
   const [showMassUploadModal, setShowMassUploadModal] = useState(false);
   const [massUploadFiles, setMassUploadFiles] = useState([]);
@@ -81,7 +83,8 @@ const TramitesNotariales = () => {
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderData, setNewFolderData] = useState({
     name: '',
-    description: ''
+    description: '',
+    tipoPersona: 'moral' // 'moral' o 'fisica'
   });
   
   // Estado para agregar nuevo usuario en permisos
@@ -97,6 +100,9 @@ const TramitesNotariales = () => {
       canPrint: false
     }
   });
+  
+  // Estado para almacenar carpetas compartidas por banca
+  const [sharedFoldersByBanca, setSharedFoldersByBanca] = useState({});
   
   // Estado para pestañas de navegación
   const [activeTab, setActiveTab] = useState('mis-archivos'); // 'mis-archivos', 'compartidos', 'recientes'
@@ -115,6 +121,45 @@ const TramitesNotariales = () => {
     };
     setActivityLog(prev => [newActivity, ...prev]);
   };
+  // Función para guardar campos de texto (correo y teléfono)
+  const handleSaveTextFields = () => {
+    if (!selectedFolder) return;
+
+    // Actualizar los documentos de la carpeta con los valores guardados
+    const updatedFolders = folders.map(folder => {
+      if (folder.id === selectedFolder.id) {
+        const updatedDocuments = folder.documents.map(doc => {
+          const fileKey = `${folder.id}-${doc.id}`;
+          const textValue = textFieldValues[fileKey];
+          
+          if (doc.type === 'text' && textValue) {
+            return {
+              ...doc,
+              value: textValue,
+              status: 'present',
+              color: 'green'
+            };
+          }
+          return doc;
+        });
+        
+        return {
+          ...folder,
+          documents: updatedDocuments
+        };
+      }
+      return folder;
+    });
+
+    setFolders(updatedFolders);
+    setSelectedFolder(updatedFolders.find(f => f.id === selectedFolder.id));
+    
+    logActivity(
+      'Datos guardados',
+      `Se guardaron los datos de correo y telefono en la carpeta "${selectedFolder.name}"`
+    );
+  };
+
 
 
   // Funciones para calcular estadísticas dinámicas
@@ -244,7 +289,18 @@ const TramitesNotariales = () => {
       role: "Editor",
       avatar: "AM",
       phone: "+52 55 5555 1234",
-      lastAccess: "2025-09-10 09:20"
+      lastAccess: "2025-09-10 09:20",
+      banca: "primer-piso"
+    },
+    {
+      id: 5,
+      name: "Fabiola Nené",
+      email: "fabiola.nene@empresa.com",
+      role: "Gestor de Carpetas",
+      avatar: "FN",
+      phone: "+52 55 6666 7777",
+      lastAccess: "2025-09-10 15:45",
+      banca: "segundo-piso"
     }
   ]);
 
@@ -480,8 +536,8 @@ const TramitesNotariales = () => {
 
   
 
-  // Estructura de documentos por defecto para nuevas carpetas
-  const getDefaultDocuments = () => {
+  // Estructura de documentos para Persona Moral (9 documentos)
+  const getDocumentosPersonaMoral = () => {
     return [
       { 
         id: 1,
@@ -576,35 +632,104 @@ const TramitesNotariales = () => {
     ];
   };
 
+  // Estructura de documentos para Persona Física (5 documentos)
+  const getDocumentosPersonaFisica = () => {
+    return [
+      { 
+        id: 1,
+        name: "INE, Pasaporte o Licencia", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: CreditCard,
+        color: "red",
+        fileUrl: null,
+        type: "file",
+        keywords: ["ine", "pasaporte", "licencia", "identificacion"]
+      },
+      { 
+        id: 2,
+        name: "Comprobante de Domicilio", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: MapPin,
+        color: "red",
+        fileUrl: null,
+        type: "file",
+        keywords: ["comprobante", "domicilio", "direccion", "recibo"]
+      },
+      { 
+        id: 3,
+        name: "Constancia de Situacion Fiscal", 
+        status: "missing", 
+        description: "Documento requerido pendiente",
+        icon: FileText,
+        color: "red",
+        fileUrl: null,
+        type: "file",
+        keywords: ["constancia", "situacion", "fiscal", "sat", "rfc"]
+      },
+      { 
+        id: 4,
+        name: "Correo Electronico", 
+        status: "missing", 
+        description: "Ingresa tu correo electronico",
+        icon: Mail,
+        color: "red",
+        value: "",
+        type: "text",
+        keywords: ["correo", "email", "electronico"]
+      },
+      { 
+        id: 5,
+        name: "Telefono de Contacto", 
+        status: "missing", 
+        description: "Ingresa tu numero de telefono",
+        icon: Phone,
+        color: "red",
+        value: "",
+        type: "text",
+        keywords: ["telefono", "contacto", "numero"]
+      }
+    ];
+  };
+
+  // Función para obtener documentos según el tipo de persona
+  const getDocumentosPorTipo = (tipoPersona) => {
+    return tipoPersona === 'moral' 
+      ? getDocumentosPersonaMoral() 
+      : getDocumentosPersonaFisica();
+  };
+
     // Función para crear nueva carpeta
   const handleCreateFolder = () => {
     if (!newFolderData.name.trim()) {
-      alert('Por favor ingrese un nombre para la carpeta');
+      alert("Por favor ingrese un nombre para la carpeta");
       return;
     }
     
-    // Obtener los 9 documentos por defecto
-    const defaultDocuments = getDefaultDocuments();
+    const documentos = getDocumentosPorTipo(newFolderData.tipoPersona);
+    const totalDocumentos = documentos.length;
     
     const newFolder = {
       id: folders.length + 1,
       name: newFolderData.name,
-      size: '0 MB',
-      color: 'blue',
+      size: "0 MB",
+      color: "blue",
       icon: FolderOpen,
-      documents: defaultDocuments,
+      documents: documentos,
+      tipoPersona: newFolderData.tipoPersona,
       completedCount: 0,
-      totalCount: 9
+      totalCount: totalDocumentos
     };
     
     setFolders([...folders, newFolder]);
-    setNewFolderData({ name: '', description: '' });
+    setNewFolderData({ name: "", description: "", tipoPersona: "moral" });
     setShowCreateFolderModal(false);
     
-    // Registrar actividad
+    const tipoTexto = newFolderData.tipoPersona === "moral" ? "Persona Moral" : "Persona Fisica";
     logActivity(
-      'Nueva carpeta creada',
-      `Se creó la carpeta "${newFolderData.name}" con 9 documentos requeridos`
+      "Nueva carpeta creada",
+      `Se creo la carpeta "${newFolderData.name}" (${tipoTexto}) con ${totalDocumentos} documentos requeridos`
     );
   };
   
@@ -1875,15 +2000,16 @@ const TramitesNotariales = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción (Opcional)
+                Tipo de Persona *
               </label>
-              <textarea
-                value={newFolderData.description}
-                onChange={(e) => setNewFolderData({ ...newFolderData, description: e.target.value })}
-                placeholder="Descripción de la carpeta..."
-                rows={3}
+              <select
+                value={newFolderData.tipoPersona}
+                onChange={(e) => setNewFolderData({ ...newFolderData, tipoPersona: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              >
+                <option value="moral">Persona Moral</option>
+                <option value="fisica">Persona Física</option>
+              </select>
             </div>
           </div>
 
@@ -2340,6 +2466,8 @@ const TramitesNotariales = () => {
             {selectedFolder.documents.map((document) => {
               const fileKey = `${selectedFolder.id}-${document.id}`;
               const uploadedFile = uploadedFiles[fileKey];
+              const textValue = textFieldValues[fileKey] || '';
+              const isTextField = document.type === 'text';
               
               return (
                 <div
@@ -2369,38 +2497,68 @@ const TramitesNotariales = () => {
                     )}
                   </div>
 
-                  {/* Actions - Siempre mostrar los 3 botones */}
+                  {/* Actions - Mostrar textbox para campos de texto, botones para archivos */}
                   <div className="space-y-2">
-                    {/* Botón Subir - siempre visible */}
-                    <button
-                      onClick={() => handleUpload(document)}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Subir
-                    </button>
-                    
-                    {/* Botones Ver y Descargar */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleView(document)}
-                        className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Ver
-                      </button>
-                      <button
-                        onClick={() => handleDownload(document)}
-                        className="flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {isTextField ? (
+                      <>
+                        <input
+                          type={document.name.includes('Correo') ? 'email' : 'tel'}
+                          value={textValue}
+                          onChange={(e) => setTextFieldValues({ ...textFieldValues, [fileKey]: e.target.value })}
+                          placeholder={document.description}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        {textValue && (
+                          <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
+                            ✓ {document.name}: {textValue}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleUpload(document)}
+                          className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Subir
+                        </button>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleView(document)}
+                            className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <Eye className="h-4 w-4" />
+                            Ver
+                          </button>
+                          <button
+                            onClick={() => handleDownload(document)}
+                            className="flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
+          
+          {/* Botón Guardar para campos de texto */}
+          {selectedFolder.documents.some(doc => doc.type === 'text') && (
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSaveTextFields}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                <CheckCircle className="h-5 w-5" />
+                Guardar Datos
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );

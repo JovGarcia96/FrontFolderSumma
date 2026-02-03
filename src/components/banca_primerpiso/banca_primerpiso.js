@@ -32,7 +32,16 @@ import {
   Ban,
   Info,
   Clock,
-  UserCheck
+  UserCheck,
+  Download,
+  Share2,
+  Copy,
+  Clipboard,
+  Move,
+  SortAsc,
+  Grid3X3,
+  List,
+  Settings
 } from 'lucide-react';
 
 const BancaPrimerPiso = () => {
@@ -301,6 +310,8 @@ const BancaPrimerPiso = () => {
     nombreBanco: "",
     descripcion: "",
     activo: true,
+    codigo: "",
+    fechaRegistro: "",
   });
   const [cuentaFormData, setCuentaFormData] = useState({
     numeroCuenta: "",
@@ -316,13 +327,20 @@ const BancaPrimerPiso = () => {
   });
 
   const handleCreate = () => {
+    // Convertir fecha si viene en formato datetime-local
+    let fechaFormato = formData.fechaRegistro;
+    if (fechaFormato) {
+      const fecha = new Date(fechaFormato);
+      fechaFormato = fecha.toLocaleDateString('es-ES') + ', ' + fecha.toLocaleTimeString('es-ES', { hour12: false });
+    }
+
     const newBanco = {
       id: Math.max(...bancos.map((b) => b.id)) + 1,
       nombreBanco: formData.nombreBanco,
       descripcion: formData.descripcion,
       activo: formData.activo,
-      fechaCreacion: new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
-      codigo: `FT${String(bancos.length + 1).padStart(3, '0')}`,
+      fechaCreacion: fechaFormato || new Date().toLocaleDateString('es-ES') + ', ' + new Date().toLocaleTimeString('es-ES', { hour12: false }),
+      codigo: formData.codigo || `FT${String(bancos.length + 1).padStart(3, '0')}`,
       direccion: "",
       telefono: "",
       email: "",
@@ -332,7 +350,7 @@ const BancaPrimerPiso = () => {
       cuentas: []
     };
     setBancos([...bancos, newBanco]);
-    setFormData({ nombreBanco: "", descripcion: "", activo: true });
+    setFormData({ nombreBanco: "", descripcion: "", activo: true, codigo: "", fechaRegistro: "" });
     setIsCreateDialogOpen(false);
   };
 
@@ -342,19 +360,36 @@ const BancaPrimerPiso = () => {
       nombreBanco: banco.nombreBanco,
       descripcion: banco.descripcion,
       activo: banco.activo,
+      codigo: banco.codigo,
+      fechaRegistro: banco.fechaCreacion,
     });
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = () => {
     if (editingBanco) {
+      // Convertir fecha si viene en formato datetime-local
+      let fechaFormato = formData.fechaRegistro;
+      if (fechaFormato && fechaFormato.includes('T')) {
+        const fecha = new Date(fechaFormato);
+        fechaFormato = fecha.toLocaleDateString('es-ES') + ', ' + fecha.toLocaleTimeString('es-ES', { hour12: false });
+      }
+
+      const updatedData = {
+        nombreBanco: formData.nombreBanco,
+        descripcion: formData.descripcion,
+        activo: formData.activo,
+        codigo: formData.codigo,
+        fechaCreacion: fechaFormato || formData.fechaRegistro,
+      };
+
       setBancos(
         bancos.map((banco) =>
-          banco.id === editingBanco.id ? { ...banco, ...formData } : banco,
+          banco.id === editingBanco.id ? { ...banco, ...updatedData } : banco,
         ),
       );
       setEditingBanco(null);
-      setFormData({ nombreBanco: "", descripcion: "", activo: true });
+      setFormData({ nombreBanco: "", descripcion: "", activo: true, codigo: "", fechaRegistro: "" });
       setIsEditDialogOpen(false);
     }
   };
@@ -636,116 +671,236 @@ const BancaPrimerPiso = () => {
 
           {/* Contenido condicional basado en la vista activa */}
           <div className="px-6 py-6">
+
+          {/* Contenido condicional basado en la vista activa */}
+          <div className="px-6 py-6">
             {activeView === "carpetas" && (
-              /* Vista de Carpetas */
+              /* Vista de Carpetas - Diseño Trámites Notariales */
               <>
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                  {/* Categorías Activas */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                {/* Título y botones principales */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      Gestión de Carpetas
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Gestiona tus documentos y archivos de forma segura
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Subir Archivo
+                    </button>
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors bg-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Nueva Carpeta
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tarjetas de estadísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  {/* Total Archivos */}
+                  <div className="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-400 mb-1">Categorías Activas</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">6</p>
+                        <p className="text-xs text-gray-500 mb-1">Total Archivos</p>
+                        <p className="text-2xl font-bold text-blue-600">14</p>
                       </div>
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <FolderOpen className="h-6 w-6 text-blue-600" />
+                      <div className="p-2.5 bg-blue-50 rounded-lg">
+                        <FileText className="h-6 w-6 text-blue-600" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Total Documentos */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  {/* Carpetas */}
+                  <div className="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Total Documentos</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">330</p>
+                        <p className="text-xs text-gray-500 mb-1">Carpetas</p>
+                        <p className="text-2xl font-bold text-green-600">3</p>
                       </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <FileText className="h-6 w-6 text-green-600" />
+                      <div className="p-2.5 bg-green-50 rounded-lg">
+                        <FolderOpen className="h-6 w-6 text-green-600" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Instituciones */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  {/* Compartidos */}
+                  <div className="bg-white rounded-lg border-l-4 border-purple-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Instituciones</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">5</p>
+                        <p className="text-xs text-gray-500 mb-1">Compartidos</p>
+                        <p className="text-2xl font-bold text-purple-600">3</p>
                       </div>
-                      <div className="p-3 bg-purple-100 rounded-lg">
-                        <Building2 className="h-6 w-6 text-purple-600" />
+                      <div className="p-2.5 bg-purple-50 rounded-lg">
+                        <Users className="h-6 w-6 text-purple-600" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Disponibilidad */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                  {/* Almacenamiento */}
+                  <div className="bg-white rounded-lg border-l-4 border-orange-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Disponibilidad</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">99.8%</p>
+                        <p className="text-xs text-gray-500 mb-1">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-orange-600">0.1 GB</p>
                       </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      <div className="p-2.5 bg-orange-50 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-orange-600" />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Folders Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Pestañas de navegación */}
+                <div className="flex items-center gap-8 mb-6 border-b border-gray-200 bg-white px-4">
+                  <button 
+                    className="flex items-center gap-2 px-2 py-3 border-b-2 border-blue-600 text-blue-600 font-medium text-sm -mb-px transition-colors"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    Mis Archivos
+                  </button>
+                </div>
+
+                {/* Toolbar completa */}
+                <div className="flex items-center justify-between mb-4 bg-white rounded-lg border border-gray-200 p-2">
+                  <div className="flex items-center gap-1">
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Nuevo</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span>Copiar</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Clipboard className="h-4 w-4" />
+                      <span>Pegar</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Renombrar</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>Compartir</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Move className="h-4 w-4" />
+                      <span>Mover</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-red-600 transition-colors text-sm"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <SortAsc className="h-4 w-4" />
+                      <span>Ordenar</span>
+                    </button>
+                    <button 
+                      className="p-2 hover:bg-gray-100 rounded-md transition-colors bg-blue-50 text-blue-600"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                    <button 
+                      className="p-2 hover:bg-gray-100 rounded-md transition-colors text-gray-700"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Barra de búsqueda */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar archivos y carpetas..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-11 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                    />
+                    <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded">
+                      <Settings className="h-4 w-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grid de Carpetas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {filteredCarpetas.map((carpeta) => (
-                    <div key={carpeta.id} className="bg-white border border-gray-100 rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer">
-                      {/* Barra de color superior */}
-                      <div className={`h-1 ${carpeta.borderColor} bg-current rounded-t-lg`}></div>
+                    <div
+                      key={carpeta.id}
+                      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-all group relative cursor-pointer"
+                    >
+                      {/* Checkbox de selección */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                      </div>
                       
-                      <div className="p-6">
-                        {/* Header con icono y badge */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            {getFolderIcon(carpeta.color)}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              carpeta.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                              carpeta.color === 'green' ? 'bg-green-100 text-green-800' :
-                              carpeta.color === 'purple' ? 'bg-purple-100 text-purple-800' :
-                              carpeta.color === 'orange' ? 'bg-orange-100 text-orange-800' :
-                              carpeta.color === 'red' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {carpeta.documentos} docs
-                            </span>
-                          </div>
+                      {/* Botones de progreso y compartir */}
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                        <button
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                          title="Ver progreso de documentos"
+                        >
+                          <TrendingUp className="h-3 w-3" />
+                          Progreso
+                        </button>
+                        
+                        <button
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          <UserCheck className="h-3 w-3" />
+                          Compartir
+                        </button>
+                      </div>
+                      
+                      {/* Contenido de la carpeta */}
+                      <div className="flex flex-col items-center text-center">
+                        <div className="mb-3 mt-4">
+                          <FolderOpen className="h-12 w-12 text-blue-500 group-hover:text-blue-600 transition-colors" />
                         </div>
-
-                        {/* Título y descripción */}
-                        <div className="mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{carpeta.nombre}</h3>
-                          <p className="text-sm text-gray-600 leading-relaxed">{carpeta.descripcion}</p>
-                        </div>
-
-                        {/* Footer con fecha */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Calendar className="h-3 w-3" />
-                            <span>Última actualización: {carpeta.fechaActualizacion}</span>
-                          </div>
-                        </div>
-
-                        {/* Botón de acceso */}
-                        <div className="mt-4">
-                          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                            <Eye className="h-4 w-4" />
-                            Acceder a Documentos
-                          </button>
-                        </div>
+                        <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
+                          {carpeta.nombre}
+                        </h3>
+                        <p className="text-xs text-gray-500">{carpeta.documentos} docs</p>
+                        <p className="text-xs text-gray-400 mt-1">{carpeta.fechaActualizacion}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </>
             )}
+          </div>
 
             {activeView === "bancos" && !showCuentasView && (
               /* Vista de Gestión de Bancos */
@@ -1269,6 +1424,19 @@ const BancaPrimerPiso = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Banco Código *
+                </label>
+                <input
+                  type="text"
+                  value={formData.codigo || ""}
+                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: FT001"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción
                 </label>
                 <textarea
@@ -1280,17 +1448,30 @@ const BancaPrimerPiso = () => {
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="activo"
-                  checked={formData.activo}
-                  onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="activo" className="text-sm text-gray-700">
-                  Banco activo
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado Operativo *
                 </label>
+                <select
+                  value={formData.activo ? "Operativo" : "Inactivo"}
+                  onChange={(e) => setFormData({ ...formData, activo: e.target.value === "Operativo" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Operativo">Operativo</option>
+                  <option value="Inactivo">Inactivo</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha de Registro *
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.fechaRegistro || ""}
+                  onChange={(e) => setFormData({ ...formData, fechaRegistro: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
             
@@ -1303,7 +1484,7 @@ const BancaPrimerPiso = () => {
               </button>
               <button
                 onClick={handleCreate}
-                disabled={!formData.nombreBanco.trim()}
+                disabled={!formData.nombreBanco.trim() || !formData.codigo?.trim()}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
               >
                 Crear Banco
@@ -1342,6 +1523,18 @@ const BancaPrimerPiso = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Banco Código *
+                </label>
+                <input
+                  type="text"
+                  value={formData.codigo || ""}
+                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción
                 </label>
                 <textarea
@@ -1352,17 +1545,30 @@ const BancaPrimerPiso = () => {
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="editActivo"
-                  checked={formData.activo}
-                  onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="editActivo" className="text-sm text-gray-700">
-                  Banco activo
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado Operativo *
                 </label>
+                <select
+                  value={formData.activo ? "Operativo" : "Inactivo"}
+                  onChange={(e) => setFormData({ ...formData, activo: e.target.value === "Operativo" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Operativo">Operativo</option>
+                  <option value="Inactivo">Inactivo</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha de Registro *
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.fechaRegistro || ""}
+                  onChange={(e) => setFormData({ ...formData, fechaRegistro: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
             
@@ -1375,7 +1581,7 @@ const BancaPrimerPiso = () => {
               </button>
               <button
                 onClick={handleUpdate}
-                disabled={!formData.nombreBanco.trim()}
+                disabled={!formData.nombreBanco.trim() || !formData.codigo?.trim()}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
               >
                 Actualizar Banco

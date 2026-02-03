@@ -1,4 +1,4 @@
-import Navigation from "./routes/Navigation";// Ajusta esta ruta según tu estructura
+import Navigation from "./routes/Navigation"; // Ajusta esta ruta según tu estructura
 
 function App() {
   return (
