@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../head/head';
 import Sidebar from '../layout/sidebar';
@@ -30,7 +30,24 @@ import {
   Calendar,
   ArrowLeft,
   Save,
-  Ban
+  Ban,
+  Download,
+  Share2,
+  Clock,
+  Copy,
+  Clipboard,
+  Move,
+  SortAsc,
+  Grid3X3,
+  List,
+  Settings,
+  UserCheck,
+  AlertCircle,
+  CloudUpload,
+  Upload,
+  Files,
+  Grid,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 const BancaSegundoPiso = () => {
@@ -274,6 +291,405 @@ const BancaSegundoPiso = () => {
     estatus: "Activa"
   });
 
+  // Estados para funcionalidades de carpetas
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [clipboard, setClipboard] = useState({ items: [], action: null });
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [itemToRename, setItemToRename] = useState(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [moveDestination, setMoveDestination] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [activityLog, setActivityLog] = useState([]);
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [viewMode, setViewMode] = useState('grid');
+  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderType, setNewFolderType] = useState('Persona Moral');
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [selectedFolderForProgress, setSelectedFolderForProgress] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFolderForPermissions, setSelectedFolderForPermissions] = useState(null);
+  const [folderPermissions, setFolderPermissions] = useState({});
+
+  // Estado para usuarios
+  const [users] = useState([
+    {
+      id: 1,
+      name: "Juan Pérez",
+      email: "juan.perez@empresa.com",
+      role: "Administrador",
+      avatar: "JP",
+      phone: "+52 55 1234 5678",
+      lastAccess: "2025-09-10 14:30"
+    },
+    {
+      id: 2,
+      name: "María González",
+      email: "maria.gonzalez@empresa.com",
+      role: "Editor",
+      avatar: "MG",
+      phone: "+52 55 8765 4321",
+      lastAccess: "2025-09-10 12:15"
+    },
+    {
+      id: 3,
+      name: "Carlos Rodríguez",
+      email: "carlos.rodriguez@empresa.com",
+      role: "Visualizador",
+      avatar: "CR",
+      phone: "+52 55 9876 5432",
+      lastAccess: "2025-09-09 16:45"
+    },
+    {
+      id: 4,
+      name: "Ana Martínez",
+      email: "ana.martinez@empresa.com",
+      role: "Editor",
+      avatar: "AM",
+      phone: "+52 55 5555 1234",
+      lastAccess: "2025-09-10 09:20",
+      banca: "segundo-piso"
+    }
+  ]);
+
+  // Función para registrar actividad
+  const logActivity = (action, details) => {
+    const newActivity = {
+      id: activityLog.length + 1,
+      action,
+      details,
+      timestamp: new Date().toISOString(),
+      user: 'Usuario Actual'
+    };
+    setActivityLog(prev => [newActivity, ...prev]);
+  };
+
+  // Función para abrir modal de progreso
+  const openProgressModal = (folder) => {
+    setSelectedFolderForProgress(folder);
+    setShowProgressModal(true);
+  };
+
+  // Función para cerrar modal de progreso
+  const closeProgressModal = () => {
+    setShowProgressModal(false);
+    setSelectedFolderForProgress(null);
+  };
+
+  // Función para calcular el porcentaje de progreso
+  const calculateProgress = (folder) => {
+    if (!folder.documentos || folder.documentos === 0) return 0;
+    const completedDocs = Math.floor(folder.documentos * 0.65);
+    return Math.round((completedDocs / folder.documentos) * 100);
+  };
+
+  // Función para abrir modal de subir archivo
+  const handleUploadClick = () => {
+    setShowUploadModal(true);
+  };
+
+  // Función para cerrar modal de subir archivo
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+  };
+
+  // Función para procesar archivos subidos
+  const handleProcessUploadedFiles = (files) => {
+    logActivity('Subir Archivo', `${files.length} archivo(s) subido(s)`);
+    alert(`${files.length} archivo(s) subido(s) correctamente`);
+  };
+
+  // Función para seleccionar/deseleccionar item
+  const toggleSelectItem = (itemId) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  // Función para copiar
+  const handleCopy = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para copiar');
+      return;
+    }
+    
+    const itemsToCopy = selectedItems.map(itemId => {
+      const carpeta = carpetas.find(c => c.id === itemId);
+      if (carpeta) {
+        return { ...carpeta };
+      }
+      return { id: itemId, nombre: itemId };
+    });
+    
+    setClipboard({ items: itemsToCopy, action: 'copy' });
+    logActivity('Copiar', `${selectedItems.length} elemento(s) copiado(s)`);
+    alert(`${selectedItems.length} elemento(s) copiado(s)`);
+  };
+
+  // Función para obtener nombre incremental
+  const getIncrementalName = (baseName) => {
+    const existingNames = carpetas.map(c => c.nombre);
+    
+    if (!existingNames.includes(baseName)) {
+      return baseName;
+    }
+    
+    let counter = 1;
+    let newName = `${baseName} (${counter})`;
+    
+    while (existingNames.includes(newName)) {
+      counter++;
+      newName = `${baseName} (${counter})`;
+    }
+    
+    return newName;
+  };
+
+  // Función para pegar
+  const handlePaste = () => {
+    if (clipboard.items.length === 0) {
+      alert('No hay elementos en el portapapeles');
+      return;
+    }
+    
+    const newCarpetas = clipboard.items.map(item => {
+      const newName = getIncrementalName(item.nombre);
+      return {
+        ...item,
+        id: Date.now() + Math.random(),
+        nombre: newName
+      };
+    });
+    
+    setCarpetas(prev => [...prev, ...newCarpetas]);
+    const pastedNames = newCarpetas.map(c => c.nombre).join(', ');
+    logActivity('Pegar', `Carpetas pegadas: ${pastedNames}`);
+    alert(`${newCarpetas.length} elemento(s) pegado(s)`);
+    setSelectedItems([]);
+  };
+
+  // Función para renombrar
+  const handleRename = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona un elemento para renombrar');
+      return;
+    }
+    if (selectedItems.length > 1) {
+      alert('Solo puedes renombrar un elemento a la vez');
+      return;
+    }
+    
+    const carpeta = carpetas.find(c => c.id === selectedItems[0]);
+    if (carpeta) {
+      setItemToRename(carpeta);
+      setNewItemName(carpeta.nombre);
+      setShowRenameModal(true);
+    }
+  };
+
+  // Función para confirmar renombrado
+  const confirmRename = () => {
+    if (!newItemName || !newItemName.trim()) {
+      alert('El nombre no puede estar vacío');
+      return;
+    }
+    
+    if (itemToRename.id) {
+      setCarpetas(prev => prev.map(c => 
+        c.id === itemToRename.id ? { ...c, nombre: newItemName.trim() } : c
+      ));
+      logActivity('Renombrar', `"${itemToRename.nombre}" renombrado a "${newItemName.trim()}"`);
+    }
+    
+    setShowRenameModal(false);
+    setItemToRename(null);
+    setNewItemName('');
+  };
+
+  // Función para mover
+  const handleMove = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para mover');
+      return;
+    }
+    setShowMoveModal(true);
+  };
+
+  // Función para confirmar movimiento
+  const confirmMove = () => {
+    if (!moveDestination) {
+      alert('Selecciona una carpeta de destino');
+      return;
+    }
+    
+    const destinationCarpeta = carpetas.find(c => c.id === moveDestination);
+    logActivity(
+      'Mover', 
+      `${selectedItems.length} elemento(s) movido(s) a "${destinationCarpeta?.nombre}"`
+    );
+    
+    setShowMoveModal(false);
+    setMoveDestination(null);
+    setSelectedItems([]);
+    alert(`Elementos movidos a "${destinationCarpeta?.nombre}" correctamente`);
+  };
+
+  // Función para eliminar
+  const handleDelete = () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un elemento para eliminar');
+      return;
+    }
+    setShowDeleteModal(true);
+  };
+
+  // Función para confirmar eliminación
+  const confirmDelete = () => {
+    const deletedNames = carpetas
+      .filter(c => selectedItems.includes(c.id))
+      .map(c => c.nombre)
+      .join(', ');
+    
+    setCarpetas(prev => prev.filter(c => !selectedItems.includes(c.id)));
+    logActivity('Eliminar', `Eliminado(s): ${deletedNames}`);
+    setShowDeleteModal(false);
+    setSelectedItems([]);
+    alert('Elemento(s) eliminado(s) correctamente');
+  };
+
+  // Función para filtrar carpetas
+  const filteredCarpetas = carpetas.filter(carpeta =>
+    carpeta.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Función para abrir carpeta
+  const openFolder = (carpeta) => {
+    alert(`Abriendo carpeta: ${carpeta.nombre}\n\nDocumentos: ${carpeta.documentos}\nTamaño: ${carpeta.documentos * 5} MB`);
+    logActivity('Carpeta abierta', `Se abrió la carpeta "${carpeta.nombre}"`);
+  };
+
+  // Función para confirmar renombrado
+  const confirmRenameModal = () => {
+    if (!newItemName || !newItemName.trim()) {
+      alert('El nombre no puede estar vacío');
+      return;
+    }
+    
+    if (itemToRename?.id) {
+      setCarpetas(prev => prev.map(c => 
+        c.id === itemToRename.id ? { ...c, nombre: newItemName.trim() } : c
+      ));
+      logActivity('Renombrar', `"${itemToRename.nombre}" renombrado a "${newItemName.trim()}"`);
+    }
+    
+    setShowRenameModal(false);
+    setItemToRename(null);
+    setNewItemName('');
+    alert('Carpeta renombrada correctamente');
+  };
+
+  // Función para confirmar movimiento
+  const confirmMoveModal = () => {
+    if (!moveDestination) {
+      alert('Selecciona una carpeta de destino');
+      return;
+    }
+    
+    const destinationCarpeta = carpetas.find(c => c.id === moveDestination);
+    logActivity(
+      'Mover', 
+      `${selectedItems.length} elemento(s) movido(s) a "${destinationCarpeta?.nombre}"`
+    );
+    
+    setShowMoveModal(false);
+    setMoveDestination(null);
+    setSelectedItems([]);
+    alert(`Elementos movidos a "${destinationCarpeta?.nombre}" correctamente`);
+  };
+
+  // Función para confirmar eliminación
+  const confirmDeleteModal = () => {
+    const deletedNames = carpetas
+      .filter(c => selectedItems.includes(c.id))
+      .map(c => c.nombre)
+      .join(', ');
+    
+    setCarpetas(prev => prev.filter(c => !selectedItems.includes(c.id)));
+    logActivity('Eliminar', `Eliminado(s): ${deletedNames}`);
+    setShowDeleteModal(false);
+    setSelectedItems([]);
+    alert('Elemento(s) eliminado(s) correctamente');
+  };
+
+  // Función para compartir
+  const handleShare = () => {
+    if (selectedItems.length === 0) {
+      alert("Selecciona al menos una carpeta para compartir");
+      return;
+    }
+    const carpeta = carpetas.find(c => c.id === selectedItems[0]);
+    if (carpeta) {
+      openPermissionsModal(carpeta);
+    }
+  };
+
+  const handleCreateFolder = () => {
+    setShowCreateFolderModal(true);
+  };
+  
+  const confirmCreateFolder = () => {
+    if (!newFolderName || !newFolderName.trim()) {
+      alert("El nombre de la carpeta no puede estar vacio");
+      return;
+    }
+    
+    const newCarpeta = {
+      id: Date.now(),
+      nombre: newFolderName.trim(),
+      descripcion: `Carpeta de ${newFolderType}`,
+      documentos: 0,
+      fechaActualizacion: new Date().toLocaleDateString("es-ES"),
+      color: "blue",
+      borderColor: "border-blue-500",
+      tipo: newFolderType
+    };
+    
+    setCarpetas(prev => [...prev, newCarpeta]);
+    logActivity("Nueva carpeta", `Se creo la carpeta "${newFolderName.trim()}" de tipo ${newFolderType}`);
+    
+    setShowCreateFolderModal(false);
+    setNewFolderName("");
+    setNewFolderType("Persona Moral");
+    alert("Carpeta creada correctamente");
+  };
+  
+  const openPermissionsModal = (carpeta) => {
+    setSelectedFolderForPermissions(carpeta);
+    setShowPermissionsModal(true);
+  };
+  
+  const updatePermission = (userId, permission, value) => {
+    setFolderPermissions(prev => ({
+      ...prev,
+      [selectedFolderForPermissions.id]: {
+        ...prev[selectedFolderForPermissions.id],
+        [userId]: {
+          ...prev[selectedFolderForPermissions.id]?.[userId],
+          [permission]: value
+        }
+      }
+    }));
+  };
+  
+  const savePermissionChanges = () => {
+    logActivity("Permisos actualizados", `Se actualizaron los permisos de la carpeta "${selectedFolderForPermissions.nombre}"`);
+    setShowPermissionsModal(false);
+    alert("Permisos guardados correctamente");
+  };
   // Función para manejar vista de información
   const handleViewInfo = (plataforma) => {
     setSelectedPlataformaInfo(plataforma);
@@ -323,7 +739,7 @@ const BancaSegundoPiso = () => {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDeletePlataforma = (id) => {
     setPlataformas(plataformas.filter((plataforma) => plataforma.id !== id));
   };
 
@@ -528,11 +944,6 @@ const BancaSegundoPiso = () => {
   const disponibilidad = "99.9%"; // Disponibilidad del sistema
 
   // Filtrar elementos según el término de búsqueda
-  const filteredCarpetas = carpetas.filter(carpeta => 
-    carpeta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    carpeta.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const filteredPlataformas = plataformas.filter(plataforma => 
     plataforma.nombrePlataforma.toLowerCase().includes(searchTerm.toLowerCase()) ||
     plataforma.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
@@ -629,105 +1040,260 @@ const BancaSegundoPiso = () => {
 
           {/* Contenido condicional basado en la vista activa */}
           <div className="px-6 py-6">
+
             {activeView === "carpetas" && (
               <>
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                {/* Título y botones principales */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      Gestión de Carpetas
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Gestiona tus documentos y archivos de forma segura
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Subir Archivo
+                    </button>
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors bg-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Nueva Carpeta
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tarjetas de estadísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  {/* Total Archivos */}
+                  <div className="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Categorías Activas</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">{totalCategorias}</p>
+                        <p className="text-xs text-gray-500 mb-1">Total Archivos</p>
+                        <p className="text-2xl font-bold text-blue-600">{totalDocumentos}</p>
                       </div>
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <FolderOpen className="h-6 w-6 text-blue-600" />
+                      <div className="p-2.5 bg-blue-50 rounded-lg">
+                        <FileText className="h-6 w-6 text-blue-600" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  {/* Carpetas */}
+                  <div className="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Total Documentos</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">{totalDocumentos}</p>
+                        <p className="text-xs text-gray-500 mb-1">Carpetas</p>
+                        <p className="text-2xl font-bold text-green-600">{totalCategorias}</p>
                       </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <FileText className="h-6 w-6 text-green-600" />
+                      <div className="p-2.5 bg-green-50 rounded-lg">
+                        <FolderOpen className="h-6 w-6 text-green-600" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  {/* Instituciones */}
+                  <div className="bg-white rounded-lg border-l-4 border-purple-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Instituciones</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">{instituciones}</p>
+                        <p className="text-xs text-gray-500 mb-1">Instituciones</p>
+                        <p className="text-2xl font-bold text-purple-600">{instituciones}</p>
                       </div>
-                      <div className="p-3 bg-purple-100 rounded-lg">
+                      <div className="p-2.5 bg-purple-50 rounded-lg">
                         <Users className="h-6 w-6 text-purple-600" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  {/* Disponibilidad */}
+                  <div className="bg-white rounded-lg border-l-4 border-orange-500 p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Disponibilidad</p>
-                        <p className="text-3xl font-bold text-gray-900 mb-1">{disponibilidad}</p>
+                        <p className="text-xs text-gray-500 mb-1">Disponibilidad</p>
+                        <p className="text-2xl font-bold text-orange-600">{disponibilidad}</p>
                       </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      <div className="p-2.5 bg-orange-50 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-orange-600" />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Folders Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Pestañas de navegación */}
+                <div className="flex items-center gap-8 mb-6 border-b border-gray-200 bg-white px-4">
+                  <button 
+                    className="flex items-center gap-2 px-2 py-3 border-b-2 border-blue-600 text-blue-600 font-medium text-sm -mb-px transition-colors"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    Mis Archivos
+                  </button>
+                  <button 
+                    className="flex items-center gap-2 px-2 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm -mb-px transition-colors"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Compartidos
+                  </button>
+                  <button 
+                    className="flex items-center gap-2 px-2 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm -mb-px transition-colors"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Recientes
+                  </button>
+                </div>
+
+                {/* Toolbar completa */}
+                <div className="flex items-center justify-between mb-4 bg-white rounded-lg border border-gray-200 p-2">
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={handleCreateFolder}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Nuevo</span>
+                    </button>
+                    <button 
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span>Copiar</span>
+                    </button>
+                    <button 
+                      onClick={handlePaste}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Clipboard className="h-4 w-4" />
+                      <span>Pegar</span>
+                    </button>
+                    <button 
+                      onClick={handleRename}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Renombrar</span>
+                    </button>
+                    <button 
+                      onClick={handleShare}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>Compartir</span>
+                    </button>
+                    <button 
+                      onClick={handleMove}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <Move className="h-4 w-4" />
+                      <span>Mover</span>
+                    </button>
+                    <button 
+                      onClick={handleDelete}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-red-600 transition-colors text-sm"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => alert('Opciones de ordenamiento: Por nombre (A-Z), Por nombre (Z-A), Por fecha (Reciente), Por fecha (Antiguo)')}
+                      className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
+                    >
+                      <SortAsc className="h-4 w-4" />
+                      <span>Ordenar</span>
+                    </button>
+                    <button 
+                      onClick={() => setViewMode('grid')}
+                      className="p-2 hover:bg-gray-100 rounded-md transition-colors bg-blue-50 text-blue-600"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => setViewMode('list')}
+                      className="p-2 hover:bg-gray-100 rounded-md transition-colors text-gray-700"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Barra de búsqueda */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar archivos y carpetas..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-11 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                    />
+                    <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded">
+                      <Settings className="h-4 w-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                
+                {/* Grid de Carpetas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {filteredCarpetas.map((carpeta) => (
-                    <div key={carpeta.id} className="bg-white border border-gray-100 rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer">
-                      {/* Barra de color superior */}
-                      <div className={`h-1 ${carpeta.borderColor} bg-current rounded-t-lg`}></div>
+                    <div
+                      key={carpeta.id}
+                      onClick={() => openFolder(carpeta)}
+                      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-all group relative cursor-pointer"
+                    >
+                      {/* Checkbox de selección */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(carpeta.id)}
+                          onChange={() => toggleSelectItem(carpeta.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                      </div>
                       
-                      <div className="p-6">
-                        {/* Header con icono y badge */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            {getFolderIcon(carpeta.color)}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              carpeta.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                              carpeta.color === 'green' ? 'bg-green-100 text-green-800' :
-                              carpeta.color === 'purple' ? 'bg-purple-100 text-purple-800' :
-                              carpeta.color === 'orange' ? 'bg-orange-100 text-orange-800' :
-                              carpeta.color === 'red' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {carpeta.documentos} docs
-                            </span>
-                          </div>
+                      {/* Botones de progreso y compartir */}
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openProgressModal(carpeta);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                          title="Ver progreso de documentos"
+                        >
+                          <TrendingUp className="h-3 w-3" />
+                          Progreso
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUploadClick();
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          <UserCheck className="h-3 w-3" />
+                          Compartir
+                        </button>
+                      </div>
+                      
+                      {/* Contenido de la carpeta */}
+                      <div className="flex flex-col items-center text-center">
+                        <div className="mb-3 mt-4">
+                          <FolderOpen className="h-12 w-12 text-blue-500 group-hover:text-blue-600 transition-colors" />
                         </div>
-
-                        {/* Título y descripción */}
-                        <div className="mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{carpeta.nombre}</h3>
-                          <p className="text-sm text-gray-600 leading-relaxed">{carpeta.descripcion}</p>
-                        </div>
-
-                        {/* Footer con fecha */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Calendar className="h-3 w-3" />
-                            <span>Última actualización: {carpeta.fechaActualizacion}</span>
-                          </div>
-                        </div>
-
-                        {/* Botón de acceso */}
-                        <div className="mt-4">
-                          <button className="w-full bg-blue-900 text-white py-2 px-4 rounded-lg hover:bg-blue-800 transition-colors text-sm font-medium flex items-center justify-center gap-2">
-                            <Eye className="h-4 w-4" />
-                            Acceder a Documentos
-                          </button>
-                        </div>
+                        <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
+                          {carpeta.nombre}
+                        </h3>
+                        <p className="text-xs text-gray-500">{carpeta.documentos} docs</p>
+                        <p className="text-xs text-gray-400 mt-1">{carpeta.fechaActualizacion}</p>
                       </div>
                     </div>
                   ))}
@@ -908,7 +1474,7 @@ const BancaSegundoPiso = () => {
                                   <button
                                     onClick={() => {
                                       if (window.confirm(`¿Está seguro que desea eliminar la plataforma "${plataforma.nombrePlataforma}"?`)) {
-                                        handleDelete(plataforma.id);
+                                        handleDeletePlataforma(plataforma.id);
                                       }
                                     }}
                                     className="text-red-600 hover:text-red-800 transition-colors p-1"
@@ -1817,6 +2383,375 @@ const BancaSegundoPiso = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Renombrar */}
+      {showRenameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Renombrar Carpeta</h3>
+            <input
+              type="text"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              placeholder="Nuevo nombre"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRenameModal(false);
+                  setItemToRename(null);
+                  setNewItemName('');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmRenameModal}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Renombrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Mover */}
+      {showMoveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Mover a</h3>
+            <div className="mb-4 max-h-64 overflow-y-auto border border-gray-200 rounded">
+              {carpetas.map((carpeta) => (
+                <div
+                  key={carpeta.id}
+                  onClick={() => setMoveDestination(carpeta.id)}
+                  className={`p-3 cursor-pointer hover:bg-blue-50 ${
+                    moveDestination === carpeta.id ? 'bg-blue-100 border-l-4 border-blue-600' : ''
+                  }`}
+                >
+                  <p className="font-medium text-gray-800">{carpeta.nombre}</p>
+                  <p className="text-sm text-gray-600">{carpeta.documentos} documentos</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowMoveModal(false);
+                  setMoveDestination(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmMoveModal}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Mover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminar */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirmar eliminación</h3>
+            <p className="text-gray-600 mb-4">
+              ¿Estás seguro de que deseas eliminar {selectedItems.length} elemento(s)? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteModal}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Crear Nueva Carpeta */}
+      {showCreateFolderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <FolderOpen className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Crear Nueva Carpeta</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Carpeta *</label>
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Ej: Documentos Legales"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Persona *</label>
+                <select
+                  value={newFolderType}
+                  onChange={(e) => setNewFolderType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Persona Moral">Persona Moral</option>
+                  <option value="Persona Fisica">Persona Fisica</option>
+                  <option value="Empresa">Empresa</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCreateFolderModal(false);
+                  setNewFolderName('');
+                  setNewFolderType('Persona Moral');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmCreateFolder}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Crear Carpeta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestion de Permisos */}
+      {showPermissionsModal && selectedFolderForPermissions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestion de Permisos</h3>
+                  <p className="text-sm text-gray-600">{selectedFolderForPermissions.nombre}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPermissionsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <button className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar Nuevo Usuario
+            </button>
+            
+            <div className="space-y-4">
+              {users.map(user => (
+                <div key={user.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
+                        {user.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{user.name}</p>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                        <p className="text-xs text-gray-500">{user.role} - Ultimo acceso: {user.lastAccess}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        defaultChecked={user.permissions.canView}
+                        onChange={(e) => updatePermission(user.id, 'canView', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">Ver</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        defaultChecked={user.permissions.canEdit}
+                        onChange={(e) => updatePermission(user.id, 'canEdit', e.target.checked)}
+                        className="w-4 h-4 text-green-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">Modificar</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        defaultChecked={user.permissions.canDelete}
+                        onChange={(e) => updatePermission(user.id, 'canDelete', e.target.checked)}
+                        className="w-4 h-4 text-red-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">Eliminar</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        defaultChecked={user.permissions.canPrint}
+                        onChange={(e) => updatePermission(user.id, 'canPrint', e.target.checked)}
+                        className="w-4 h-4 text-purple-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">Imprimir</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <p className="text-sm text-gray-600 mt-4">{users.length} usuarios configurados</p>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowPermissionsModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={savePermissionChanges}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente Modal de Subir Archivo
+const UploadFileModal = ({ isOpen, onClose, onUpload }) => {
+  const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleProcessFiles = () => {
+    if (selectedFiles.length > 0) {
+      onUpload(selectedFiles);
+      setSelectedFiles([]);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Upload className="h-6 w-6 text-blue-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Subida de Archivos</h3>
+              <p className="text-sm text-gray-600">{selectedFiles.length} archivos seleccionados</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
+
+        <div className="flex-1 p-6 overflow-auto">
+          {selectedFiles.length === 0 ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            >
+              <CloudUpload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <h4 className="text-lg font-medium text-gray-900 mb-1">Selecciona archivos</h4>
+              <p className="text-sm text-gray-600">Haz clic aquí o arrastra archivos</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                  <FileText className="h-8 w-8 text-blue-500 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{file.name}</h4>
+                    <p className="text-sm text-gray-600">{(file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveFile(index)}
+                    className="p-1 hover:bg-red-100 rounded text-red-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between p-6 border-t border-gray-200">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Seleccionar más archivos
+          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleProcessFiles}
+              disabled={selectedFiles.length === 0}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Procesar Archivos
+            </button>
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
     </div>
   );
 };

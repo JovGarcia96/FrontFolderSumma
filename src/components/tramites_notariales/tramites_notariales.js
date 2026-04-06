@@ -3,6 +3,7 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import Header from '../head/head';
 import Sidebar from '../layout/sidebar';
+ // Debe estar en src/components/tramites_notariales/Error404Cavemen.jsx
 import { 
   ArrowLeft,
   Plus,
@@ -52,15 +53,346 @@ import {
   Scissors,
   FolderPlus,
   Grid,
-  User
+  User,
+  ChevronRight,
+  AlertTriangle,
+  FileCheck,
+  Briefcase,
+  Signature
 } from 'lucide-react';
 
+
+
+// ==================== COMPONENTE PARA GRID DE SUBIDA DE DOCUMENTOS ====================
+const DocumentUploadGrid = ({ 
+  folder, 
+  parentFolderName,
+  onBack,
+  uploadedFiles = {},
+  onFileUpload,
+  onFileDelete,
+  onMassUpload
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  const massUploadRef = useRef(null);
+
+  // Documentos para Persona Moral
+  const DOCUMENTOS_MORAL = [
+    { id: 'acta', name: 'Acta Constitutiva', icon: FileText, color: 'red' },
+    { id: 'poder', name: 'Poder Representante Legal', icon: Shield, color: 'blue' },
+    { id: 'registro', name: 'Registro Público Comercio', icon: Building, color: 'green' },
+    { id: 'cedula', name: 'Cédula Identificación Fiscal', icon: User, color: 'yellow' },
+    { id: 'comprobante', name: 'Comprobante Domicilio Fiscal', icon: MapPin, color: 'purple' },
+    { id: 'identificacion', name: 'Identificación Oficial', icon: FileCheck, color: 'pink' },
+    { id: 'forma', name: 'Forma Migratoria', icon: Briefcase, color: 'indigo' },
+    { id: 'efirma1', name: 'E-firma Razón Social', icon: Signature, color: 'cyan' },
+    { id: 'efirma2', name: 'E-firma Representante', icon: Users, color: 'orange' }
+  ];
+
+  // Documentos para Persona Física
+  const DOCUMENTOS_FISICA = [
+    { id: 'ine', name: 'INE, Pasaporte o Licencia', icon: FileText, color: 'red' },
+    { id: 'comprobante', name: 'Comprobante de Domicilio', icon: MapPin, color: 'blue' },
+    { id: 'constancia', name: 'Constancia de Situación Fiscal', icon: FileCheck, color: 'green' },
+    { id: 'correo', name: 'Correo Electrónico', icon: Mail, color: 'yellow', type: 'text' },
+    { id: 'telefono', name: 'Teléfono de Contacto', icon: Phone, color: 'purple', type: 'text' }
+  ];
+
+  const documentos = folder?.tipoPersona === 'moral' ? DOCUMENTOS_MORAL : DOCUMENTOS_FISICA;
+
+  const getIconColor = (color) => {
+    const colors = {
+      red: 'bg-red-100 text-red-600',
+      blue: 'bg-blue-100 text-blue-600',
+      green: 'bg-green-100 text-green-600',
+      yellow: 'bg-yellow-100 text-yellow-600',
+      purple: 'bg-purple-100 text-purple-600',
+      pink: 'bg-pink-100 text-pink-600',
+      indigo: 'bg-indigo-100 text-indigo-600',
+      cyan: 'bg-cyan-100 text-cyan-600',
+      orange: 'bg-orange-100 text-orange-600'
+    };
+    return colors[color] || 'bg-gray-100 text-gray-600';
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (onMassUpload) {
+      onMassUpload(files);
+    }
+  };
+
+  const handleMassUploadClick = () => {
+    massUploadRef.current?.click();
+  };
+
+  const handleMassUploadChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (onMassUpload) {
+      onMassUpload(files);
+    }
+  };
+
+  const handleFileUploadClick = (docId) => {
+    fileInputRef.current?.click();
+    fileInputRef.current.dataset.docId = docId;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && onFileUpload) {
+      const docId = fileInputRef.current.dataset.docId;
+      onFileUpload(docId, file);
+    }
+  };
+
+  const getDocumentStatus = (docId) => {
+    const fileKey = `${folder?.id}-${docId}`;
+    return uploadedFiles[fileKey] ? 'uploaded' : 'pending';
+  };
+
+
+  // ==================== FUNCIÓN DE LOGOUT ====================
+  const handleLogout = () => {
+    // Limpiar datos de sesión
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userData');
+    sessionStorage.clear();
+    
+    // Redirigir a login o home
+    window.location.href = '/login'; // Cambiar a tu ruta de login
+    
+    console.log('✅ Usuario desconectado');
+  };
+
+
+
+
+  return (
+    <div className={`bg-white rounded-lg border border-gray-200 relative ${isDragging ? 'border-blue-500 border-2' : ''}`}>
+      {/* Overlay de drag & drop */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
+          <div className="text-center">
+            <CloudUpload className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-blue-900 mb-2">
+              Suelta los archivos aquí
+            </h3>
+            <p className="text-blue-700">
+              Los documentos se asignarán automáticamente a sus casillas correspondientes
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Breadcrumb */}
+      <div className="px-6 pt-4 pb-2 text-sm">
+        <div className="flex items-center gap-2 text-gray-600">
+          <span className="text-blue-600 font-medium cursor-pointer hover:text-blue-700">
+            {parentFolderName}
+          </span>
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <span className="text-gray-900 font-semibold">
+            {folder?.name}
+          </span>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-blue-100">
+              <Building className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Documentos de "{folder?.name}"
+              </h2>
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold">
+                  {folder?.tipoPersona === 'moral' ? 'Persona Moral' : 'Persona Física'}
+                </span>
+                {' • '}
+                Vista completa de documentos y estado de validación
+              </p>
+            </div>
+          </div>
+        </div>
+        <button 
+          onClick={handleMassUploadClick}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <Files className="h-4 w-4" />
+          Subida Masiva
+        </button>
+      </div>
+
+      {/* Grid de documentos */}
+      <div 
+        className="p-6"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {documentos.map((document) => {
+            const fileKey = `${folder?.id}-${document.id}`;
+            const uploadedFile = uploadedFiles[fileKey];
+            const status = getDocumentStatus(document.id);
+            const IconComponent = document.icon;
+
+            return (
+              <div 
+                key={document.id}
+                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-all"
+              >
+                {/* Header de la card */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`p-3 rounded-lg ${getIconColor(document.color)}`}>
+                    <IconComponent className="h-6 w-6" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {status === 'uploaded' ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Nombre y descripción */}
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  {document.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {document.type === 'text' ? 'Ingresa tu ' + document.name.toLowerCase() : 'Documento requerido pendiente'}
+                </p>
+
+                {/* Contenido según tipo */}
+                {document.type === 'text' ? (
+                  <input
+                    type="text"
+                    placeholder={`Ingresa tu ${document.name.toLowerCase()}`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3 focus:outline-none focus:border-blue-500"
+                  />
+                ) : (
+                  <>
+                    {uploadedFile ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                        <p className="text-sm text-green-800 font-medium">
+                          ✓ Archivo cargado
+                        </p>
+                        <p className="text-xs text-green-700 mt-1">
+                          {uploadedFile.name}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 mb-3 text-center">
+                        <p className="text-sm text-gray-600">
+                          Sin archivo
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Botones de acción */}
+                <div className="flex gap-2">
+                  {document.type !== 'text' && (
+                    <>
+                      <button
+                        onClick={() => handleFileUploadClick(document.id)}
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                      >
+                        <CloudUpload className="h-4 w-4" />
+                        Subir
+                      </button>
+                      {uploadedFile && (
+                        <>
+                          <button
+                            className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            title="Ver archivo"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            title="Descargar"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => onFileDelete?.(document.id)}
+                            className="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Input file oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileChange}
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+      />
+      <input
+        ref={massUploadRef}
+        type="file"
+        className="hidden"
+        multiple
+        onChange={handleMassUploadChange}
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+      />
+    </div>
+  );
+};
 
 const TramitesNotariales = () => {
   // Estado para la búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   // Estado para la vista actual
-  const [currentView, setCurrentView] = useState('folders'); // 'folders' | 'folder-detail'
+  const [currentView, setCurrentView] = useState('folders');
+  // ==================== ESTADO DE ERRORES ====================
+  const [error, setError] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+ // 'folders' | 'folder-detail'
   const [selectedFolder, setSelectedFolder] = useState(null);
   // Estado para el modal de documento
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -79,13 +411,23 @@ const TramitesNotariales = () => {
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedFolderForPermissions, setSelectedFolderForPermissions] = useState(null);
   
-  // Estado para modal de crear carpeta
-  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
-  const [newFolderData, setNewFolderData] = useState({
-    name: '',
-    description: '',
-    tipoPersona: 'moral' // 'moral' o 'fisica'
+  // Estado para modal de crear carpeta PRINCIPAL (solo nombre)
+  const [showCreateMainFolderModal, setShowCreateMainFolderModal] = useState(false);
+  const [newMainFolderData, setNewMainFolderData] = useState({
+    name: ''
   });
+  
+  // Estado para modal de crear SUBCARPETA (con tipo de persona)
+  const [showCreateSubfolderModal, setShowCreateSubfolderModal] = useState(false);
+  const [newSubfolderData, setNewSubfolderData] = useState({
+    name: '',
+    tipoPersona: 'moral'
+  });
+  
+  // Estado para modal de tipo de persona en SUBCARPETA
+  const [showPersonTypeModal, setShowPersonTypeModal] = useState(false);
+  const [selectedSubfolderForPersonType, setSelectedSubfolderForPersonType] = useState(null);
+  const [selectedPersonType, setSelectedPersonType] = useState('moral');
   
   // Estado para agregar nuevo usuario en permisos
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -252,6 +594,10 @@ const TramitesNotariales = () => {
   const [selectedStandaloneFile, setSelectedStandaloneFile] = useState(null);
   const [documentContent, setDocumentContent] = useState(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  // ==================== ESTADO PARA NAVEGACIÓN DE CARPETAS ANIDADAS ====================
+  const [folderPath, setFolderPath] = useState([]); // Ruta de navegación: [folderId1, folderId2, ...]
+  const [currentFolderId, setCurrentFolderId] = useState(null); // ID de la carpeta actual (null = raíz)
+
 
   // Datos de usuarios para gestión de permisos
   const [users] = useState([
@@ -427,7 +773,8 @@ const TramitesNotariales = () => {
         }
       ],
       completedCount: 4,
-      totalCount: 9
+      totalCount: 9,
+      subfolders: []
     },
     {
       id: 2,
@@ -468,7 +815,8 @@ const TramitesNotariales = () => {
         }
       ],
       completedCount: 2,
-      totalCount: 3
+      totalCount: 3,
+      subfolders: []
     },
     {
       id: 3,
@@ -499,7 +847,8 @@ const TramitesNotariales = () => {
         }
       ],
       completedCount: 1,
-      totalCount: 2
+      totalCount: 2,
+      subfolders: []
     }
   ]);
 
@@ -699,38 +1048,190 @@ const TramitesNotariales = () => {
       ? getDocumentosPersonaMoral() 
       : getDocumentosPersonaFisica();
   };
+  // ==================== FUNCIÓN PARA OBTENER LA CARPETA ACTUAL ====================
+  const getCurrentFolder = () => {
+    if (currentFolderId === null) return null;
+    
+    let folder = folders.find(f => f.id === currentFolderId);
+    if (folder) return folder;
+    
+    // Si no está en el nivel raíz, buscar en subcarpetas
+    for (let mainFolder of folders) {
+      folder = findFolderInSubfolders(mainFolder, currentFolderId);
+      if (folder) return folder;
+    }
+    return null;
+  };
+
+  // ==================== FUNCIÓN RECURSIVA PARA BUSCAR CARPETA EN SUBCARPETAS ====================
+  const findFolderInSubfolders = (folder, folderId) => {
+    if (folder.id === folderId) return folder;
+    
+    if (folder.subfolders && folder.subfolders.length > 0) {
+      for (let subfolder of folder.subfolders) {
+        const found = findFolderInSubfolders(subfolder, folderId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // ==================== FUNCIÓN RECURSIVA PARA AGREGAR SUBCARPETA ====================
+  const addSubfolderRecursively = (folder, targetFolderId, newFolder) => {
+    if (folder.id === targetFolderId) {
+      return {
+        ...folder,
+        subfolders: [...(folder.subfolders || []), newFolder]
+      };
+    }
+    
+    if (folder.subfolders && folder.subfolders.length > 0) {
+      return {
+        ...folder,
+        subfolders: folder.subfolders.map(subfolder => 
+          addSubfolderRecursively(subfolder, targetFolderId, newFolder)
+        )
+      };
+    }
+    
+    return folder;
+  };
+
+  // ==================== FUNCIÓN PARA NAVEGAR A UNA CARPETA ====================
+  const navigateToFolder = (folderId) => {
+    setCurrentFolderId(folderId);
+    setFolderPath([...folderPath, folderId]);
+    setSelectedItems([]);
+  };
+
+  // ==================== FUNCIÓN PARA VOLVER A LA CARPETA ANTERIOR ====================
+  const goBackFolder = () => {
+    if (folderPath.length > 0) {
+      const newPath = folderPath.slice(0, -1);
+      setFolderPath(newPath);
+      setCurrentFolderId(newPath.length > 0 ? newPath[newPath.length - 1] : null);
+    }
+  };
+
+  // ==================== FUNCIÓN PARA IR A LA RAÍZ ====================
+  const goToRoot = () => {
+    setFolderPath([]);
+    setCurrentFolderId(null);
+  };
+
+  // ==================== FUNCIÓN PARA OBTENER NOMBRE DE CARPETA PRINCIPAL ====================
+  const getParentFolderName = () => {
+    if (folderPath.length === 0) return null;
+    
+    // El primer elemento en folderPath es la carpeta principal
+    const parentFolderId = folderPath[0];
+    const parentFolder = folders.find(f => f.id === parentFolderId);
+    return parentFolder?.name || null;
+  };
+
+  // ==================== FUNCIÓN PARA OBTENER CARPETAS ACTUALES ====================
+  const getCurrentFolders = () => {
+    if (currentFolderId === null) {
+      return folders; // Retornar carpetas principales
+    }
+    
+    const currentFolder = getCurrentFolder();
+    return currentFolder?.subfolders || [];
+  };
+
+
 
     // Función para crear nueva carpeta
-  const handleCreateFolder = () => {
-    if (!newFolderData.name.trim()) {
+  // ==================== CREAR CARPETA PRINCIPAL (SOLO NOMBRE) ====================
+  const handleCreateMainFolder = () => {
+    if (!newMainFolderData.name.trim()) {
       alert("Por favor ingrese un nombre para la carpeta");
       return;
     }
     
-    const documentos = getDocumentosPorTipo(newFolderData.tipoPersona);
+    // Las carpetas principales NO tienen tipo de persona
+    const newFolder = {
+      id: folders.length + 1,
+      name: newMainFolderData.name,
+      size: "0 MB",
+      color: "blue",
+      icon: FolderOpen,
+      documents: [],
+      subfolders: [],
+      tipoPersona: null, // SIN tipo de persona
+      completedCount: 0,
+      totalCount: 0
+    };
+    
+    setFolders([...folders, newFolder]);
+    setNewMainFolderData({ name: "" });
+    setShowCreateMainFolderModal(false);
+    
+    logActivity(
+      "Nueva carpeta creada",
+      `Se creó la carpeta principal "${newMainFolderData.name}"`
+    );
+  };
+
+  // ==================== CREAR SUBCARPETA (CON TIPO DE PERSONA) ====================
+  const handleCreateSubfolder = () => {
+    if (!newSubfolderData.name.trim()) {
+      alert("Por favor ingrese un nombre para la subcarpeta");
+      return;
+    }
+    
+    const documentos = getDocumentosPorTipo(newSubfolderData.tipoPersona);
     const totalDocumentos = documentos.length;
     
     const newFolder = {
-      id: folders.length + 1,
-      name: newFolderData.name,
+      id: Date.now(), // Usar timestamp para IDs únicos
+      name: newSubfolderData.name,
       size: "0 MB",
       color: "blue",
       icon: FolderOpen,
       documents: documentos,
-      tipoPersona: newFolderData.tipoPersona,
+      subfolders: [],
+      tipoPersona: newSubfolderData.tipoPersona, // CON tipo de persona
       completedCount: 0,
       totalCount: totalDocumentos
     };
     
-    setFolders([...folders, newFolder]);
-    setNewFolderData({ name: "", description: "", tipoPersona: "moral" });
-    setShowCreateFolderModal(false);
-    
-    const tipoTexto = newFolderData.tipoPersona === "moral" ? "Persona Moral" : "Persona Fisica";
-    logActivity(
-      "Nueva carpeta creada",
-      `Se creo la carpeta "${newFolderData.name}" (${tipoTexto}) con ${totalDocumentos} documentos requeridos`
+    // Agregar la subcarpeta a la carpeta actual
+    setFolders(prevFolders => 
+      prevFolders.map(folder => 
+        addSubfolderRecursively(folder, currentFolderId, newFolder)
+      )
     );
+    
+    setNewSubfolderData({ name: "", tipoPersona: "moral" });
+    setShowCreateSubfolderModal(false);
+    
+    // ✅ NUEVO: Automáticamente abrir la vista de documentos para la subcarpeta creada
+    setSelectedFolder(newFolder);
+    setCurrentView('documents-cards');
+    
+    const tipoTexto = newSubfolderData.tipoPersona === "moral" ? "Persona Moral" : "Persona Física";
+    logActivity(
+      "Nueva subcarpeta creada",
+      `Se creó la subcarpeta "${newSubfolderData.name}" (${tipoTexto}) con ${totalDocumentos} documentos requeridos`
+    );
+  };
+
+  // ==================== FUNCIÓN PARA DETERMINAR QÚAL MODAL MOSTRAR ====================
+  const handleNewFolderClick = () => {
+    // FORZAR: Solo permitir crear carpetas en raíz o dentro de carpetas principales
+    // NO permitir crear subcarpetas dentro de subcarpetas con tipoPersona
+    if (currentFolderId === null) {
+      // Estamos en raíz, mostrar modal simple
+      setShowCreateMainFolderModal(true);
+    } else if (currentView === 'documents-cards') {
+      // Si estamos en vista de documentos, NO permitir crear más carpetas
+      // Mostrar mensaje o no hacer nada
+      return;
+    } else {
+      // Estamos dentro de una carpeta principal, mostrar modal con tipo de persona
+      setShowCreateSubfolderModal(true);
+    }
   };
   
   // Función para agregar nuevo usuario
@@ -1226,9 +1727,6 @@ const TramitesNotariales = () => {
     } else {
       // Si es un archivo
       const fileNames = {
-        'file-1': 'Reporte Financiero Q1.pdf',
-        'file-2': 'Presentación Bancaria.pptx',
-        'file-3': 'Logo Empresa.png'
       };
       const fileName = fileNames[selectedItems[0]];
       if (fileName) {
@@ -1393,14 +1891,47 @@ const TramitesNotariales = () => {
 
   // Función para abrir carpeta
   const openFolder = (folder) => {
-    setSelectedFolder(folder);
-    setCurrentView('folder-detail');
+    console.log('🔍 openFolder - Abriendo:', folder.name, 'tipoPersona:', folder.tipoPersona);
+    console.log('📁 Folder object:', folder);
+    
+    if (folder.tipoPersona) {
+      // Es una subcarpeta con tipo de persona - mostrar grid de documentos
+      console.log('✅ Mostrando documents-cards para:', folder.name);
+      console.log('📄 Documentos:', folder.documents);
+      
+      // Forzar que selectedFolder tenga los documentos
+      const folderWithDocs = {
+        ...folder,
+        documents: folder.documents || getDocumentosPorTipo(folder.tipoPersona)
+      };
+      
+      setSelectedFolder(folderWithDocs);
+      setCurrentView('documents-cards');
+    } else {
+      // Es una carpeta principal - navegar dentro
+      console.log('📁 Navegando dentro:', folder.name);
+      setCurrentFolderId(folder.id);
+      setFolderPath([...folderPath, folder.id]);
+      setCurrentView('folders');  // Asegurar que currentView sea 'folders'
+      setSelectedFolder(null);
+    }
   };
 
-  // Función para volver a la vista de carpetas
+
+  // Función para volver a la vista anterior
   const goBackToFolders = () => {
-    setCurrentView('folders');
-    setSelectedFolder(null);
+    // Si estamos en la vista de documentos (folder-detail o documents-cards), volver a la vista de subcarpetas
+    if (currentView === 'folder-detail' || currentView === 'documents-cards') {
+      setCurrentView('folders');
+      setSelectedFolder(null);
+    } else if (folderPath.length > 0) {
+      const newPath = folderPath.slice(0, -1);
+      setFolderPath(newPath);
+      setCurrentFolderId(newPath.length > 0 ? newPath[newPath.length - 1] : null);
+    } else {
+      setCurrentView('folders');
+      setSelectedFolder(null);
+    }
   };
 
   // Funciones de drag & drop
@@ -1953,9 +2484,9 @@ const TramitesNotariales = () => {
     );
   };
 
-  // Modal de crear carpeta
-  const CreateFolderModal = () => {
-    if (!showCreateFolderModal) return null;
+  // ==================== MODAL PARA CREAR CARPETA PRINCIPAL (SOLO NOMBRE) ====================
+  const CreateMainFolderModal = () => {
+    if (!showCreateMainFolderModal) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1969,7 +2500,7 @@ const TramitesNotariales = () => {
               </h3>
             </div>
             <button 
-              onClick={() => setShowCreateFolderModal(false)}
+              onClick={() => setShowCreateMainFolderModal(false)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X className="h-5 w-5 text-gray-600" />
@@ -1984,11 +2515,77 @@ const TramitesNotariales = () => {
               </label>
               <input
                 type="text"
-                value={newFolderData.name}
-                onChange={(e) => setNewFolderData({ ...newFolderData, name: e.target.value })}
+                value={newMainFolderData.name}
+                onChange={(e) => setNewMainFolderData({ ...newMainFolderData, name: e.target.value })}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleCreateFolder();
+                    handleCreateMainFolder();
+                  }
+                }}
+                placeholder="Ej: Documentos Legales"
+                autoFocus
+                spellCheck="false"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+            <button
+              onClick={() => setShowCreateMainFolderModal(false)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCreateMainFolder}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Crear Carpeta
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ==================== MODAL PARA CREAR SUBCARPETA (CON TIPO DE PERSONA) ====================
+  const CreateSubfolderModal = () => {
+    if (!showCreateSubfolderModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <FolderOpen className="h-6 w-6 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Crear Nueva Subcarpeta
+              </h3>
+            </div>
+            <button 
+              onClick={() => setShowCreateSubfolderModal(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre de la Subcarpeta *
+              </label>
+              <input
+                type="text"
+                value={newSubfolderData.name}
+                onChange={(e) => setNewSubfolderData({ ...newSubfolderData, name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateSubfolder();
                   }
                 }}
                 placeholder="Ej: Documentos Legales"
@@ -2003,8 +2600,8 @@ const TramitesNotariales = () => {
                 Tipo de Persona *
               </label>
               <select
-                value={newFolderData.tipoPersona}
-                onChange={(e) => setNewFolderData({ ...newFolderData, tipoPersona: e.target.value })}
+                value={newSubfolderData.tipoPersona}
+                onChange={(e) => setNewSubfolderData({ ...newSubfolderData, tipoPersona: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="moral">Persona Moral</option>
@@ -2016,16 +2613,16 @@ const TramitesNotariales = () => {
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
             <button
-              onClick={() => setShowCreateFolderModal(false)}
+              onClick={() => setShowCreateSubfolderModal(false)}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancelar
             </button>
             <button
-              onClick={handleCreateFolder}
+              onClick={handleCreateSubfolder}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Crear Carpeta
+              Crear Subcarpeta
             </button>
           </div>
         </div>
@@ -2437,7 +3034,7 @@ const TramitesNotariales = () => {
             </button>
             <div className="flex items-center gap-3">
               <div className={`p-3 rounded-lg ${getDocumentIconColor('blue')}`}>
-                <selectedFolder.icon className="h-6 w-6" />
+                <FolderOpen className="h-6 w-6 text-blue-500" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
@@ -2477,7 +3074,7 @@ const TramitesNotariales = () => {
                   {/* Status badge */}
                   <div className="flex justify-between items-start mb-4">
                     <div className={`p-3 rounded-lg ${getDocumentIconColor(document.color)}`}>
-                      <document.icon className="h-6 w-6" />
+                      {document.icon && React.createElement(document.icon, { className: "h-6 w-6" })}
                     </div>
                     {getDocumentStatusBadge(document.status)}
                   </div>
@@ -3166,7 +3763,7 @@ const TramitesNotariales = () => {
   
   // Vista principal de carpetas
   const renderFoldersView = () => {
-    const sortedFolders = getSortedFolders(filteredFolders);
+    const sortedFolders = getSortedFolders(getCurrentFolders());
     
     return (
       <div>
@@ -3331,102 +3928,7 @@ const TramitesNotariales = () => {
           </div>
         ))}
 
-        {/* Archivo de ejemplo (puedes eliminarlo) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative">
-          {/* Checkbox de selección */}
-          <div className="absolute top-3 left-3 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes('folder-estados')}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleSelectItem('folder-estados');
-              }}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-          </div>
-          
-          {/* Botón de compartir */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              alert('Compartir carpeta Estados de Cuenta');
-            }}
-            className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors z-10"
-          >
-            <UserCheck className="h-3 w-3" />
-            Compartir
-          </button>
-          
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-3 mt-4">
-              <FolderOpen className="h-12 w-12 text-blue-500 group-hover:text-blue-600 transition-colors" />
-            </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
-              Estados de Cuenta
-            </h3>
-            <p className="text-xs text-gray-500 mb-1">---</p>
-            <p className="text-xs text-gray-400">Hace 3 días</p>
-          </div>
-        </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative">
-          {/* Checkbox de selección */}
-          <div className="absolute top-3 left-3 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes('file-2')}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleSelectItem('file-2');
-              }}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-          </div>
-          
-          <div 
-            onClick={() => toggleSelectItem('file-2')}
-            className="flex flex-col items-center text-center cursor-pointer"
-          >
-            <div className="mb-3">
-              <FileText className="h-12 w-12 text-blue-600 group-hover:text-blue-700 transition-colors" />
-            </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
-              Presentación Bancaria.pptx
-            </h3>
-            <p className="text-xs text-gray-500 mb-1">5.1 MB</p>
-            <p className="text-xs text-gray-400">Hace 5 días</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative">
-          {/* Checkbox de selección */}
-          <div className="absolute top-3 left-3 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes('file-3')}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleSelectItem('file-3');
-              }}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-          </div>
-          
-          <div 
-            onClick={() => toggleSelectItem('file-3')}
-            className="flex flex-col items-center text-center cursor-pointer"
-          >
-            <div className="mb-3">
-              <FileText className="h-12 w-12 text-green-500 group-hover:text-green-600 transition-colors" />
-            </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1 truncate w-full">
-              Logo Empresa.png
-            </h3>
-            <p className="text-xs text-gray-500 mb-1">856 KB</p>
-            <p className="text-xs text-gray-400">Hace 1 semana</p>
-          </div>
-        </div>
           </div>
         )}
         
@@ -3504,57 +4006,7 @@ const TramitesNotariales = () => {
                   </td>
                 </tr>
                 
-                <tr className="hover:bg-gray-50 cursor-pointer">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <FileText className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm font-medium text-gray-900">Presentación Bancaria.pptx</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">PPTX</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">5.1 MB</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Hace 5 días</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="p-1 hover:bg-blue-50 rounded text-blue-600">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1 hover:bg-green-50 rounded text-green-600">
-                        <Share2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                
-                <tr className="hover:bg-gray-50 cursor-pointer">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <FileText className="h-5 w-5 text-green-500" />
-                      <span className="text-sm font-medium text-gray-900">Logo Empresa.png</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">PNG</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">856 KB</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Hace 1 semana</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="p-1 hover:bg-blue-50 rounded text-blue-600">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1 hover:bg-green-50 rounded text-green-600">
-                        <Share2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+
               </tbody>
             </table>
           </div>
@@ -3562,6 +4014,31 @@ const TramitesNotariales = () => {
       </div>
     );
   };
+
+  // ==================== MONITOREO DE CONEXION ====================
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setError(null);
+      console.log('Conexion restaurada');
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setError('Sin conexion a internet. Por favor verifica tu red.');
+      console.log('Conexion perdida');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -3617,7 +4094,7 @@ const TramitesNotariales = () => {
                     className="hidden"
                   />
                   <button 
-                    onClick={() => setShowCreateFolderModal(true)}
+                    onClick={handleNewFolderClick}
                     className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors bg-white"
                   >
                     <FolderPlus className="h-4 w-4" />
@@ -3722,7 +4199,7 @@ const TramitesNotariales = () => {
               <div className="flex items-center justify-between mb-4 bg-white rounded-lg border border-gray-200 p-2">
                 <div className="flex items-center gap-1">
                   <button 
-                    onClick={() => setShowCreateFolderModal(true)}
+                    onClick={handleNewFolderClick}
                     className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors text-sm"
                   >
                     <Upload className="h-4 w-4" />
@@ -3876,7 +4353,261 @@ const TramitesNotariales = () => {
           )}
 
           {/* Contenido principal */}
-          {currentView === 'folders' ? (
+          {currentFolderId !== null ? (
+            // Vista de subcarpetas dentro de una carpeta
+            <div>
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-2 mb-6 text-sm">
+                <button 
+                  onClick={() => {
+                    setFolderPath([]);
+                    setCurrentFolderId(null);
+                  }}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Inicio
+                </button>
+                {folderPath.map((folderId, index) => {
+                  const folder = getCurrentFolder();
+                  return (
+                    <div key={folderId} className="flex items-center gap-2">
+                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-700 font-medium">
+                        {folder?.name || `Carpeta ${index + 1}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Botones de acción */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={goBackToFolders}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {getCurrentFolder()?.name || 'Carpeta'}
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Gestiona las subcarpetas y documentos
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => uploadFileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Subir Archivo
+                  </button>
+                  <button 
+                    onClick={handleNewFolderClick}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors bg-white"
+                  >
+                    <FolderPlus className="h-4 w-4" />
+                    Nueva Carpeta
+                  </button>
+                </div>
+              </div>
+              
+              {/* Renderizar subcarpetas */}
+              {renderFoldersView()}
+            </div>
+          ) : currentView === 'documents-cards' ? (
+            // Vista de cards de documentos para subcarpetas
+            <div 
+              className={`bg-white rounded-lg border border-gray-200 relative ${isDragging ? 'border-blue-500 border-2' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              {/* Overlay de drag & drop */}
+              {isDragging && (
+                <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
+                  <div className="text-center">
+                    <CloudUpload className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-blue-900 mb-2">
+                      Suelta los archivos aquí
+                    </h3>
+                    <p className="text-blue-700">
+                      Los documentos se asignarán automáticamente a sus casillas correspondientes
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Breadcrumb */}
+              <div className="px-6 pt-4 pb-2 text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <span className="text-blue-600 font-medium cursor-pointer hover:text-blue-700">
+                    {getParentFolderName()}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-900 font-semibold">
+                    {selectedFolder?.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={goBackToFolders}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-lg ${getDocumentIconColor('blue')}`}>
+                      {selectedFolder?.icon && React.createElement(selectedFolder.icon, { className: "h-6 w-6" })}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Documentos de "{selectedFolder?.name}"
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-semibold">
+                          {selectedFolder?.tipoPersona === 'moral' ? 'Persona Moral' : 'Persona Física'}
+                        </span>
+                        {' • '}
+                        Vista completa de documentos y estado de validación
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={handleMassUpload}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Files className="h-4 w-4" />
+                    Subida Masiva
+                  </button>
+                </div>
+              </div>
+              
+              {/* Grid de documentos */}
+              <div className="p-6">
+                {console.log('📊 Renderizando grid:', { 
+                  folderName: selectedFolder?.name,
+                  documentCount: selectedFolder?.documents?.length,
+                  documents: selectedFolder?.documents?.map(d => d.name)
+                })}
+                {!selectedFolder?.documents || selectedFolder.documents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                    <p className="text-gray-600">No hay documentos asignados a esta carpeta</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {selectedFolder?.documents?.map((document) => {
+                  const fileKey = `${selectedFolder.id}-${document.id}`;
+                  const uploadedFile = uploadedFiles[fileKey];
+                  const textValue = textFieldValues[fileKey] || '';
+                  const isTextField = document.type === 'text';
+                  
+                  return (
+                    <div
+                      key={document.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200"
+                    >
+                      {/* Status badge */}
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`p-3 rounded-lg ${getDocumentIconColor(document.color)}`}>
+                          {document.icon && React.createElement(document.icon, { className: "h-6 w-6" })}
+                        </div>
+                        {getDocumentStatusBadge(document.status)}
+                      </div>
+
+                      {/* Document info */}
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-gray-900 mb-2">
+                          {document.name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {document.description}
+                        </p>
+                        {uploadedFile && (
+                          <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
+                            📄 {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="space-y-2">
+                        {isTextField ? (
+                          <>
+                            <input
+                              type={document.name.includes('Correo') ? 'email' : 'tel'}
+                              value={textValue}
+                              onChange={(e) => setTextFieldValues({ ...textFieldValues, [fileKey]: e.target.value })}
+                              placeholder={document.description}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            {textValue && (
+                              <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
+                                ✓ {document.name}: {textValue}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleUpload(document)}
+                              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              <Upload className="h-4 w-4" />
+                              Subir
+                            </button>
+                            
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleView(document)}
+                                className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                <Eye className="h-4 w-4" />
+                                Ver
+                              </button>
+                              <button
+                                onClick={() => handleDownload(document)}
+                                className="flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                  </div>
+                )}
+              </div>
+              
+              {/* Botón Guardar para campos de texto */}
+              {selectedFolder?.documents?.some(doc => doc.type === 'text') && (
+                <div className="mt-6 flex justify-end px-6 pb-6">
+                  <button
+                    onClick={handleSaveTextFields}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  >
+                    <CheckCircle className="h-5 w-5" />
+                    Guardar Datos
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : currentView === 'folders' ? (
             activeTab === 'mis-archivos' ? renderFoldersView() :
             activeTab === 'compartidos' ? renderSharedView() :
             activeTab === 'recientes' ? renderRecentView() :
@@ -3899,7 +4630,8 @@ const TramitesNotariales = () => {
       <DocumentModal />
       <MassUploadModal />
       <PermissionsModal />
-      <CreateFolderModal />
+      <CreateMainFolderModal />
+      <CreateSubfolderModal />
       <ProgressModal />
       <AddUserModal />
       <StandaloneFilePreviewModal />
