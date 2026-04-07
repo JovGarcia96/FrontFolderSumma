@@ -1,17 +1,41 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Search,
   Bell,
   Sun,
   Moon,
-  User
+  User,
+  LogOut,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
 
 const Header = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  // Cerrar menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userData');
+    sessionStorage.clear();
+    window.location.href = '/login';
   };
 
   return (
@@ -56,11 +80,51 @@ const Header = () => {
             )}
           </button>
 
-          {/* User Avatar */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gray-900 rounded-full flex items-center justify-center">
+          {/* User Avatar with Dropdown Menu */}
+          <div className="relative" ref={userMenuRef}>
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors cursor-pointer group relative"
+              title="Menú de usuario"
+            >
               <User className="h-4 w-4 text-white" />
-            </div>
+              <ChevronDown className="h-3 w-3 text-white absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                {/* User Info */}
+                <div className="px-4 py-2 border-b border-gray-200">
+                  <p className="text-sm font-semibold text-gray-900">Usuario</p>
+                  <p className="text-xs text-gray-500">usuario@example.com</p>
+                </div>
+
+                {/* Menu Items */}
+                <button 
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    // Ir a configuración
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Configuración
+                </button>
+
+                {/* Logout Button */}
+                <button 
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-gray-200 mt-2 pt-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -2543,7 +2543,7 @@ const MisArchivos = () => {
         <footer className="bg-white border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              © 2025 FinDrive. Todos los derechos reservados.
+              © 2026 FinDrive. Todos los derechos reservados.
             </div>
             <div className="text-sm text-gray-600">
               Sistema de gestión documental financiera

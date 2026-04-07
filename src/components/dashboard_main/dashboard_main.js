@@ -314,7 +314,7 @@ const DashboardMain = () => {
         {/* Footer - ALINEADO CON SIDEBAR */}
         <footer className="h-12 bg-white border-t border-gray-200 flex items-center justify-between px-3">
           <div className="text-xs text-gray-500">
-            © 2025 FinDrive. Todos los derechos reservados.
+            © 2026 FinDrive. Todos los derechos reservados.
           </div>
           <div className="text-xs text-gray-500">
             Sistema de gestión documental financiera
